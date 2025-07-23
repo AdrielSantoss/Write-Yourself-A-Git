@@ -1,0 +1,87 @@
+## Build e compilação
+bin/
+obj/
+out/
+
+## Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## VS Code
+.vscode/
+.history/
+
+## Arquivos de log e debug
+*.log
+
+## Arquivos temporários
+*.tmp
+*.temp
+*.bak
+*.swp
+
+## Backup do editor
+*~
+*.orig
+
+## Pacotes
+packages/
+*.nupkg
+*.snupkg
+
+## Diretórios do NuGet
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## Cache do Rider / JetBrains
+.idea/
+*.sln.iml
+
+## Arquivos de testes
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+## Publish / Deploy
+*.Publish.xml
+*.pubxml
+*.publishproj
+
+## Configurações locais
+appsettings.Development.json
+secrets.json
+
+## MacOS / Linux
+.DS_Store
+*.ds_store
+*.AppleDouble
+*.LSOverride
+*.swp
+*.swn
+*.swo
+*.swn
+*~
+
+## Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+## dotnet user secrets
+**/.vs/**/*.user
+**/secrets.json
+
+## Rider
+.idea/
+*.sln.iml
+
+## Outros
+_ReSharper*/
+*.resharper
+*.DotSettings.user
+*.sln.cache
