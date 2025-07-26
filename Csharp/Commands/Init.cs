@@ -8,7 +8,7 @@ namespace Csharp.Commands
 {
     public class Init
     {
-        public void Execute()
+        public static void Execute()
         {
             var gitDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
 

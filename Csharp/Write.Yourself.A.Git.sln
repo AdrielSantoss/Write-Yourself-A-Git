@@ -6,6 +6,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Csharp", "Csharp.csproj", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Csharp.Test", "..\Csharp.Test\Csharp.Test.csproj", "{4E7888A9-66E5-4ABF-A70B-BD0662F1EDB3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Csharp.Core", "..\Csharp.Core\Csharp.Core.csproj", "{4BE83E51-56BF-4225-B3F5-007445B557F4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,6 +22,10 @@ Global
 		{4E7888A9-66E5-4ABF-A70B-BD0662F1EDB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4E7888A9-66E5-4ABF-A70B-BD0662F1EDB3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4E7888A9-66E5-4ABF-A70B-BD0662F1EDB3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4BE83E51-56BF-4225-B3F5-007445B557F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4BE83E51-56BF-4225-B3F5-007445B557F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4BE83E51-56BF-4225-B3F5-007445B557F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4BE83E51-56BF-4225-B3F5-007445B557F4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

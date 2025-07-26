@@ -9,7 +9,7 @@ if (args.Length == 0)
 switch (args[0])
 {
     case "init":
-        new Init().Execute();
+        Init.Execute();
         break;
 
     case "hash-object":
