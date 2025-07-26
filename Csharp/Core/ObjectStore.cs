@@ -1,0 +1,30 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO.Compression;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Csharp.Core
+{
+    public class ObjectStore
+    {
+        public static void WriteObject(string sha1, byte[] data)
+        {
+            string dir = Path.Combine(".gitadr", "objects", sha1.Substring(0, 2));
+            string file = sha1.Substring(2);
+
+            if (!Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
+
+            string path = Path.Combine(dir, file);
+
+            if (!File.Exists(path))
+            {
+                using var fs = File.Create(path);
+                using var zlib = new ZLibStream(fs, CompressionMode.Compress);
+                zlib.Write(data, 0, data.Length);
+            }
+        }
+    }
+}

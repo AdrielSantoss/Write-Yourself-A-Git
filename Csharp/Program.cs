@@ -6,11 +6,14 @@ if (args.Length == 0)
     return;
 }
 
-
 switch (args[0])
 {
     case "init":
-        GitInit.Execute();
+        Init.Execute();
+        break;
+
+    case "hash-object":
+        HashObject.Execute(args[1..]);
         break;
 
     default:

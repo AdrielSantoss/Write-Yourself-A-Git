@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Csharp.Commands
 {
-    public class GitInit
+    public class Init
     {
         public static void Execute()
         {
