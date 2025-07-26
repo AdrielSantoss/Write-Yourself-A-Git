@@ -16,6 +16,10 @@ switch (args[0])
         HashObject.Execute(args[1..]);
         break;
 
+    case "cat-file":
+        CatFile.Execute(args[1..]);
+        break;
+
     default:
         Console.WriteLine($"Comando desconhecido: {args[0]}");
         break;

@@ -1,10 +1,6 @@
 ﻿using Csharp.Core;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Csharp.Commands
 {
@@ -14,7 +10,7 @@ namespace Csharp.Commands
         {
             if (args.Length < 2)
             {
-                Console.WriteLine("Uso: meugit hash-object [-w] <arquivo>");
+                Console.WriteLine("Uso: dotnet run -- hash-object [-w] <arquivo>");
                 return;
             }
 

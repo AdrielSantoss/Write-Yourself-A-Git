@@ -15,16 +15,14 @@ namespace Csharp.Core
             string file = sha1.Substring(2);
 
             if (!Directory.Exists(dir))
+            {
                 Directory.CreateDirectory(dir);
+            }
 
             string path = Path.Combine(dir, file);
-
-            if (!File.Exists(path))
-            {
-                using var fs = File.Create(path);
-                using var zlib = new ZLibStream(fs, CompressionMode.Compress);
-                zlib.Write(data, 0, data.Length);
-            }
+            using var fs = File.Create(path);
+            using var zlib = new ZLibStream(fs, CompressionMode.Compress);
+            zlib.Write(data, 0, data.Length);
         }
     }
 }
