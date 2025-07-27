@@ -1,6 +1,6 @@
 ﻿using Csharp.Commands;
 
-namespace Csharp.Test
+namespace Csharp.Test.Configs
 {
     public class GitAdrFixture
     {

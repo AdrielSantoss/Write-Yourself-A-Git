@@ -5,24 +5,24 @@ namespace Csharp.Commands
 {
     public class CatFile
     {
-        public static void Execute(string[] args)
+        public static string Execute(string[] args)
         {
             if (args.Length < 2 || args[0] != "-p")
             {
                 Console.WriteLine("Uso: dotnet run -- cat-file [-p] <hash>");
-                return;
+                return string.Empty;
             }
 
-            string hash = args[1];
+            var hash = args[1];
 
-            string dir = Path.Combine(".gitadr", "objects", hash.Substring(0, 2));
-            string file = hash.Substring(2);
-            string path = Path.Combine(dir, file);
+            var dir = Path.Combine(".gitadr", "objects", hash.Substring(0, 2));
+            var file = hash.Substring(2);
+            var path = Path.Combine(dir, file);
 
             if (!Directory.Exists(dir) || !File.Exists(path))
             {
                 Console.WriteLine($"Objeto não encontrado: ${hash} não encontrado.");
-                return;
+                return string.Empty;
             }
 
             using var fs = File.OpenRead(path);
@@ -32,14 +32,17 @@ namespace Csharp.Commands
             zlib.CopyTo(outputStream);
             var data = outputStream.ToArray();
 
-            int nullIndex = Array.IndexOf(data, (byte)0);
+            var nullIndex = Array.IndexOf(data, (byte)0);
             if (nullIndex == -1)
             {
                 Console.WriteLine("Objeto inválido (sem header)");
-                return;
+                return string.Empty;
             }
 
-            Console.WriteLine(Encoding.UTF8.GetString(data[(nullIndex + 1)..]));
+            var content = Encoding.UTF8.GetString(data[(nullIndex + 1)..]);
+            Console.WriteLine(content);
+
+            return content;
         }
     }
 }
