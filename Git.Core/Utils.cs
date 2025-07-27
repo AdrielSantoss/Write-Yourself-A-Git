@@ -19,5 +19,7 @@ namespace Csharp.Core
 
             return BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
         }
+
+        // Colocar o combineBlob aqui
     }
 }
