@@ -14,8 +14,8 @@ namespace Csharp.Commands
                 return;
             }
 
-            bool write = args[0] == "-w";
-            string path = write ? args[1] : args[0];
+            var write = args[0] == "-w";
+            var path = write ? args[1] : args[0];
 
             if (!File.Exists(path))
             {
@@ -23,11 +23,11 @@ namespace Csharp.Commands
                 return;
             }
 
-            byte[] content = File.ReadAllBytes(path);
-            string header = $"blob {content.Length}\0";
-            byte[] fullBlob = CreateBlob(Encoding.UTF8.GetBytes(header), content);
+            var content = File.ReadAllBytes(path);
+            var header = $"blob {content.Length}\0";
+            var fullBlob = CreateBlob(Encoding.UTF8.GetBytes(header), content);
 
-            string sha1Hash = ComputeSha1(fullBlob);
+            var sha1Hash = ComputeSha1(fullBlob);
             Console.WriteLine(sha1Hash);
 
             if (write)
@@ -38,7 +38,7 @@ namespace Csharp.Commands
 
         private static byte[] CreateBlob(byte[] a, byte[] b)
         {
-            byte[] combined = new byte[a.Length + b.Length];
+            var combined = new byte[a.Length + b.Length];
             Buffer.BlockCopy(a, 0, combined, 0, a.Length);
             Buffer.BlockCopy(b, 0, combined, a.Length, b.Length);
             return combined;
@@ -47,7 +47,7 @@ namespace Csharp.Commands
         private static string ComputeSha1(byte[] data)
         {
             using var sha1 = SHA1.Create();
-            byte[] hashBytes = sha1.ComputeHash(data);
+            var hashBytes = sha1.ComputeHash(data);
             return BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
         }
     }

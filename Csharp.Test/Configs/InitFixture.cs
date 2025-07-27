@@ -2,9 +2,9 @@
 
 namespace Csharp.Test.Configs
 {
-    public class GitAdrFixture
+    public class InitFixture
     {
-        public GitAdrFixture()
+        public InitFixture()
         {
             var gitAdrDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
 

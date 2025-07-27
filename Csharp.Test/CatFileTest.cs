@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Csharp.Test
 {
-    public class CatFileTest : IClassFixture<GitAdrFixture>
+    public class CatFileTest : IClassFixture<InitFixture>
     {
         [Fact]
         public void CatFile_DecompressAndReadBlobObject()

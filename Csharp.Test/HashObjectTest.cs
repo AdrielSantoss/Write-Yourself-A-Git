@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Csharp.Test
 {
-    public class HashObjectTest : IClassFixture<GitAdrFixture>
+    public class HashObjectTest : IClassFixture<InitFixture>
     {
         [Fact]
         public static void HashObject_CreateAndCompressBlobObject()
