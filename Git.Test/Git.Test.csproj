@@ -15,8 +15,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Csharp.Core\Csharp.Core.csproj" />
-    <ProjectReference Include="..\Csharp\Csharp.csproj" />
     <ProjectReference Include="..\Git.Core\Git.Core.csproj" />
     <ProjectReference Include="..\Git\Git.csproj" />
   </ItemGroup>
