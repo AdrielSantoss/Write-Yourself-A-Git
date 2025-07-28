@@ -1,4 +1,5 @@
 ﻿using Csharp.Core;
+using System.Reflection.Metadata;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -23,32 +24,13 @@ namespace Csharp.Commands
                 return;
             }
 
-            var content = File.ReadAllBytes(path);
-            var header = $"blob {content.Length}\0";
-            var fullBlob = CreateBlob(Encoding.UTF8.GetBytes(header), content);
-
-            var sha1Hash = ComputeSha1(fullBlob);
+            var (sha1Hash, fullBlob) = Utils.WriteBlob(path);
             Console.WriteLine(sha1Hash);
 
             if (write)
             {
                 ObjectStore.WriteObject(sha1Hash, fullBlob);
             }
-        }
-
-        private static byte[] CreateBlob(byte[] a, byte[] b)
-        {
-            var combined = new byte[a.Length + b.Length];
-            Buffer.BlockCopy(a, 0, combined, 0, a.Length);
-            Buffer.BlockCopy(b, 0, combined, a.Length, b.Length);
-            return combined;
-        }
-
-        private static string ComputeSha1(byte[] data)
-        {
-            using var sha1 = SHA1.Create();
-            var hashBytes = sha1.ComputeHash(data);
-            return BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
         }
     }
 }
