@@ -1,6 +1,4 @@
 ﻿using Csharp.Core;
-using System.Reflection.Metadata;
-using System.Text;
 
 namespace Csharp.Commands
 {

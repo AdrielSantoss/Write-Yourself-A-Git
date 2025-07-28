@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Security.Cryptography;
-using System.Text;
+﻿using System.Text;
 
 namespace Csharp.Core
 {
@@ -23,7 +19,7 @@ namespace Csharp.Core
             {
                 var modeBytes = Encoding.ASCII.GetBytes(entry.Mode + " ");
                 var nameBytes = Encoding.UTF8.GetBytes(entry.Name);
-                var sha1Bytes = StringToSha1Bytes(entry.Sha1);
+                var sha1Bytes = Utils.StringToSha1Bytes(entry.Sha1);
 
                 treeStream.Write(modeBytes, 0, modeBytes.Length);
                 treeStream.Write(nameBytes, 0, nameBytes.Length);
@@ -39,17 +35,6 @@ namespace Csharp.Core
             ObjectStore.WriteObject(treeSha1, fullTree);
 
             return treeSha1;
-        }
-
-        private static byte[] StringToSha1Bytes(string sha1)
-        {
-            var bytes = new byte[20];
-            for (var i = 0; i < 20; i++)
-            {
-                var byteString = sha1.Substring(i * 2, 2);
-                bytes[i] = Convert.ToByte(byteString, 16);
-            }
-            return bytes;
         }
     }
 }

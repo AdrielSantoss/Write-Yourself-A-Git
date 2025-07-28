@@ -42,5 +42,16 @@ namespace Csharp.Core
 
             return (sha1, fullBlob);
         }
+
+        public static byte[] StringToSha1Bytes(string sha1)
+        {
+            var bytes = new byte[20];
+            for (var i = 0; i < 20; i++)
+            {
+                var byteString = sha1.Substring(i * 2, 2);
+                bytes[i] = Convert.ToByte(byteString, 16);
+            }
+            return bytes;
+        }
     }
 }
