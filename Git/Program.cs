@@ -20,6 +20,10 @@ switch (args[0])
         CatFile.Execute(args[1..]);
         break;
 
+    case "write-tree":
+        WriteTree.Execute(args[1..]);
+        break;
+
     default:
         Console.WriteLine($"Comando desconhecido: {args[0]}");
         break;
