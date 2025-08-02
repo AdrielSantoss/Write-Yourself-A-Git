@@ -21,7 +21,7 @@ switch (args[0])
         break;
 
     case "write-tree":
-        WriteTree.Execute(args[1..]);
+        WriteTree.Execute();
         break;
 
     default:
