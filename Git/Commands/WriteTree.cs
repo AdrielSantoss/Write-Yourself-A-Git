@@ -14,13 +14,16 @@ namespace Csharp.Commands
             Console.WriteLine(rootTreeSha1);
         }
 
-        private static string WriteTreeRecursive(string directory)
+        public static string WriteTreeRecursive(string directory)
         {
             var entries = new List<TreeEntry>();
 
             foreach (var file in Directory.GetFiles(directory))
             {
-                if (ignoreFiles.Any(ignore => file.Contains(ignore))) continue;
+                if (ignoreFiles.Any(ignore => file.Contains(ignore)))
+                {
+                    continue;
+                }
 
                 var (blobSha1, fullBlob) = Utils.WriteBlob(file);
                 ObjectStore.WriteObject(blobSha1, fullBlob);
