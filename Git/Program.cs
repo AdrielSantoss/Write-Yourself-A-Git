@@ -1,4 +1,5 @@
 ﻿using Csharp.Commands;
+using Git.Commands;
 
 if (args.Length == 0)
 {
@@ -22,6 +23,10 @@ switch (args[0])
 
     case "write-tree":
         WriteTree.Execute();
+        break;
+
+    case "ls-tree":
+        LsTree.Execute(args[1..]);
         break;
 
     default:

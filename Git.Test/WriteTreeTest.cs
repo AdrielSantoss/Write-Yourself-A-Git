@@ -1,6 +1,5 @@
 ﻿using Csharp.Commands;
 using Csharp.Core;
-using Csharp.Test.Configs;
 using System.Text;
 
 namespace Csharp.Test
