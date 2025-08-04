@@ -7,15 +7,15 @@ Este projeto é uma implementação educacional de comandos básicos do Git em C
 ## 📁 Estrutura do Projeto
 - `Git/` - Implementação dos comandos principais do Git.
   - `Commands/` - Comandos implementados:
-    - `CatFile.cs` - Exibe o conteúdo de objetos armazenados.
-    - `HashObject.cs` - Calcula o hash SHA-1 de arquivos e armazena como objeto.
     - `Init.cs` - Inicializa um novo repositório Git.
+    - `HashObject.cs` - Calcula o hash SHA-1 de arquivos e armazena como blobs.
+    - `CatFile.cs` - Exibe o conteúdo de objetos armazenados.
+    - `WriteTree.cs` - Calcula o hash SHA-1 de arquivos e diretórios armazena como blobs e trees.
   - `Core/` - Lógica interna para manipulação de objetos Git:
     - `ObjectStore.cs` - Gerenciamento de armazenamento de objetos.
     - `TreeObject.cs` - Manipulação de árvores de objetos.
 - `Git.Core/` - Utilitários e funções de apoio para o funcionamento dos comandos.
 - `Git.Test/` - Testes automatizados para os comandos implementados.
-  - `CatFileTest.cs`, `HashObjectTest.cs` - Testes para os comandos já prontos.
 
 ## ▶️ Como executar
 1. Abra a solução `Write.Yourself.A.Git.sln` no Visual Studio.
@@ -24,19 +24,17 @@ Este projeto é uma implementação educacional de comandos básicos do Git em C
 
 ## ✅ Funcionalidades já implementadas
 - Inicialização de repositório (`init`)
-- Exibição de objetos (`cat-file`)
 - Hash e armazenamento de arquivos (`hash-object`)
+- Exibição de objetos (`cat-file`)
+- Hash e armazenamento de arquivos e diretórios (`write-tree`)
 
 ## 🛠️ Funcionalidades planejadas
 - Implementação de outros comandos do Git
 - Melhorias na interface de linha de comando
 - Documentação detalhada
 
-## ⚠️ Aviso
-Este projeto está em fase inicial de desenvolvimento. Muitas funcionalidades do Git ainda não foram implementadas e podem haver mudanças frequentes na estrutura do código.
-
 ## 📚 Referências
-- [Write Yourself a Git](https://wyag.thb.lt/) (tutorial base)
+- [Write Yourself a Git](https://wyag.thb.lt/)
 - Documentação oficial do Git
 
 ---
