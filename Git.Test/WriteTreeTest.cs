@@ -6,8 +6,7 @@ namespace Csharp.Test
 {
     public class WriteTreeTest
     {
-        [Fact]
-        public void WriteTree_CreateBlobsAndTreeObjects()
+        public static (string, string) CreateWorksSpace_AndWriteTree()
         {
             var tempRoot = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
             Directory.CreateDirectory(tempRoot);
@@ -23,6 +22,7 @@ namespace Csharp.Test
 
             var filePath = Path.Combine(dir, fileName);
             File.WriteAllText(filePath, content, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+            File.WriteAllText(Path.Combine(tempRoot, fileName), content, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
 
             var contentFileBytes = File.ReadAllBytes(filePath);
             var blobHeader = $"blob {contentFileBytes.Length}\0";
@@ -45,14 +45,29 @@ namespace Csharp.Test
             {
                 new TreeEntry
                 {
+                    Mode = "100644",
+                    Name = fileName,
+                    Sha1 = blobSha1
+                },
+                new TreeEntry
+                {
                     Mode = "040000",
                     Name = "src",
                     Sha1 = srcTreeSha1
-                }
+                },
             };
 
-            var expectedRootSha1 = TreeObject.WriteTree(treeEntriesRoot);
-            var actualRootSha1 = WriteTree.WriteTreeRecursive(tempRoot);
+            var rootSha1 = TreeObject.WriteTree(treeEntriesRoot);
+
+            return (tempRoot, rootSha1);
+        }
+
+        [Fact]
+        public void WriteTree_CreateBlobsAndTreeObjects()
+        {
+            var (workSpace, expectedRootSha1) = CreateWorksSpace_AndWriteTree();
+
+            var actualRootSha1 = WriteTree.WriteTreeRecursive(workSpace);
 
             Assert.Equal(expectedRootSha1, actualRootSha1);
         }
