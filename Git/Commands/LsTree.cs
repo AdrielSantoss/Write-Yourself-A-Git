@@ -1,6 +1,8 @@
 ﻿
+using Csharp.Core;
 using System.IO;
 using System.IO.Compression;
+using System.Text;
 
 namespace Git.Commands
 {
@@ -14,22 +16,28 @@ namespace Git.Commands
                 return;
             }
 
-            var hash = args[1];
-            var dir = Path.Combine(".gitadr", "objects", hash.Substring(0, 2));
-            var file = hash.Substring(2);
-            var path = Path.Combine(dir, file);
+            var data = Utils.GetObjectDataBySha1(args[1]);
+            var nullIndexHeader = Array.IndexOf(data, (byte)0);
+            var content = data.Skip(nullIndexHeader + 1).ToArray();
 
-            if (!Directory.Exists(dir) || !File.Exists(path))
+            int offset = 0;
+            while (offset < content.Length)
             {
-                Console.WriteLine($"Tree não encontrada: ${hash} não encontrado.");
-                return;
+                int modeEnd = Array.IndexOf(content, (byte)0x20, offset);
+                var mode = Encoding.UTF8.GetString(content, offset, modeEnd - offset);
+
+                int nameEnd = Array.IndexOf(content, (byte)0, modeEnd + 1);
+                var name = Encoding.UTF8.GetString(content, modeEnd + 1, nameEnd - (modeEnd + 1));
+
+                var sha1Bytes = content.Skip(nameEnd + 1).Take(20).ToArray();
+                var sha1 = Utils.Sha1BytesToString(sha1Bytes);
+
+                var type = mode == "040000" ? "tree" : "blob";
+
+                Console.WriteLine($"{mode} {type} {sha1} {name}");
+
+                offset = nameEnd + 1 + 20;
             }
-
-            using var fs = File.OpenRead(path);
-            using var zlib = new ZLibStream(fs, CompressionMode.Decompress);
-            using var outputStream = new MemoryStream();
-
-            zlib.CopyTo(outputStream);
         }
     }
 }
