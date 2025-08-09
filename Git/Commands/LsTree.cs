@@ -1,24 +1,24 @@
 ﻿
 using Csharp.Core;
-using System.IO;
-using System.IO.Compression;
 using System.Text;
 
 namespace Git.Commands
 {
     public class LsTree
     {
-        public static void Execute(string[] args)
+        public static string Execute(string[] args)
         {
             if (args.Length < 2 || args[0] != "-p")
             {
                 Console.WriteLine("Uso: dotnet run -- ls-tree [-p] <hash>");
-                return;
+                return string.Empty;
             }
 
             var data = Utils.GetObjectDataBySha1(args[1]);
             var nullIndexHeader = Array.IndexOf(data, (byte)0);
             var content = data.Skip(nullIndexHeader + 1).ToArray();
+
+            string result = "";
 
             int offset = 0;
             while (offset < content.Length)
@@ -34,10 +34,15 @@ namespace Git.Commands
 
                 var type = mode == "040000" ? "tree" : "blob";
 
-                Console.WriteLine($"{mode} {type} {sha1} {name}");
+                var lineData = ($"{mode} {type} {sha1} {name}");
+                
+                Console.WriteLine(lineData);
 
+                result += lineData;
                 offset = nameEnd + 1 + 20;
             }
+
+            return result;
         }
     }
 }
