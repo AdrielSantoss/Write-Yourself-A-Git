@@ -19,8 +19,8 @@ namespace Git.Commands
             using var commitStream = new MemoryStream();
 
             var tree = Encoding.UTF8.GetBytes($"tree {rootSha1}\n");
-            var author = Encoding.UTF8.GetBytes($"author Adriel <adriel@gmail.com> {Utils.GetTimestamp()} {Utils.GetTimezone()}\n");
-            var committer = Encoding.UTF8.GetBytes($"committer Adriel <adriel@email.com> {Utils.GetTimestamp()} {Utils.GetTimezone()}\n");
+            var author = Encoding.UTF8.GetBytes($"author Guest <author@gmail.com> {Utils.GetTimestamp()} {Utils.GetTimezone()}\n");
+            var committer = Encoding.UTF8.GetBytes($"committer Guest <commiter@email.com> {Utils.GetTimestamp()} {Utils.GetTimezone()}\n");
             var message = Encoding.UTF8.GetBytes($"{args[1]}\n");
 
             commitStream.Write(tree, 0, tree.Length);
@@ -35,9 +35,17 @@ namespace Git.Commands
             var fullCommit = Utils.CombineBytes(Encoding.UTF8.GetBytes(header), commitContent);
             var commitSha1 = Utils.ComputeSha1(fullCommit);
 
+            UpdateHead(commitSha1);
+
             Console.WriteLine(commitSha1);
 
             return string.Empty;
+        }
+
+        private static void UpdateHead(string commitSha1)
+        {
+            var gitAdrDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
+            File.WriteAllText(Path.Combine(gitAdrDir, "refs", "heads", "master"), commitSha1);
         }
     }
 }
