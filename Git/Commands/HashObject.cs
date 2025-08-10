@@ -20,8 +20,7 @@ namespace Csharp.Commands
 
             if (!File.Exists(path))
             {
-                Console.WriteLine($"Arquivo não encontrado: {path}");
-                return string.Empty;
+                throw new Exception($"Arquivo não encontrado: {path}");
             }
 
             var (sha1Hash, fullBlob) = Utils.WriteBlob(path);
