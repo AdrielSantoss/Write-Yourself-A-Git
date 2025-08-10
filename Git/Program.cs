@@ -39,6 +39,10 @@ switch (args[0])
         Commit.Execute(args[1..]);
         break;
 
+    case "log":
+        Log.Execute();
+        break;
+
     default:
         Console.WriteLine($"Comando desconhecido: {args[0]}");
         break;
