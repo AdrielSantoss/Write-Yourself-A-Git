@@ -19,7 +19,7 @@ namespace Git.Commands
             using var commitStream = new MemoryStream();
 
             var tree = Encoding.UTF8.GetBytes($"tree {rootSha1}\n");
-            var parentSah1 = ReadHead();
+            var parentSah1 = Utils.ReadLastCommitSha1();
             var parent = !string.IsNullOrWhiteSpace(parentSah1) ? Encoding.UTF8.GetBytes($"parent {parentSah1}\n") : null;
             var author = Encoding.UTF8.GetBytes($"author Guest <author@gmail.com> {Utils.GetTimestamp()} {Utils.GetTimezone()}\n");
             var committer = Encoding.UTF8.GetBytes($"committer Guest <commiter@email.com> {Utils.GetTimestamp()} {Utils.GetTimezone()}\n");
@@ -55,12 +55,6 @@ namespace Git.Commands
         {
             var gitAdrDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
             File.WriteAllText(Path.Combine(gitAdrDir, "refs", "heads", "master"), commitSha1);
-        }
-
-        private static string ReadHead()
-        {
-            var gitAdrDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
-            return File.ReadAllText(Path.Combine(gitAdrDir, "refs", "heads", "master"));
         }
     }
 }

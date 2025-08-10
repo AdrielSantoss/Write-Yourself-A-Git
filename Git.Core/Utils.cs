@@ -100,5 +100,11 @@ namespace Csharp.Core
         }
         public static string GetTimestamp() => DateTimeOffset.Now.ToUnixTimeSeconds().ToString();
         public static string GetTimezone() => DateTimeOffset.Now.ToString("zzz").Replace(":", "");
+
+        public static string ReadLastCommitSha1()
+        {
+            var gitAdrDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
+            return File.ReadAllText(Path.Combine(gitAdrDir, "refs", "heads", "master"));
+        }
     }
 }
