@@ -7,6 +7,12 @@ if (args.Length == 0)
     return;
 }
 
+if (args[0] != "init" && !Directory.Exists(".gitadr"))
+{
+    Console.WriteLine("GitAdr não inicializado.");
+    return;
+}
+
 switch (args[0])
 {
     case "init":
