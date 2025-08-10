@@ -8,10 +8,9 @@ namespace Csharp.Commands
     {
         private static readonly string[] ignoreFiles = { ".gitadr", "Program.cs", "Git.csproj", "bin", "Commands", "Core", "obj", ".vs" };
 
-        public static void Execute()
+        public static string Execute()
         {
-            var rootTreeSha1 = WriteTreeRecursive(Directory.GetCurrentDirectory());
-            Console.WriteLine(rootTreeSha1);
+            return WriteTreeRecursive(Directory.GetCurrentDirectory());
         }
 
         public static string WriteTreeRecursive(string directory)
