@@ -30,6 +30,10 @@ namespace Csharp.Test.Configs
             Assert.True(
                 File.Exists(Path.Combine(gitAdrDir, "HEAD")),
                 "Arquivo 'HEAD' não encontrado.");
+
+            Assert.True(
+                File.Exists(Path.Combine(gitAdrDir, "refs", "heads", "master")),
+                "Arquivo 'master' não encontrado.");
         }
     }
 }
