@@ -98,5 +98,7 @@ namespace Csharp.Core
 
             return data;
         }
+        public static string GetTimestamp() => DateTimeOffset.Now.ToUnixTimeSeconds().ToString();
+        public static string GetTimezone() => DateTimeOffset.Now.ToString("zzz").Replace(":", "");
     }
 }

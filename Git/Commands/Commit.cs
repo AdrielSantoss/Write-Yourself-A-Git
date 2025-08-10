@@ -19,8 +19,8 @@ namespace Git.Commands
             using var commitStream = new MemoryStream();
 
             var tree = Encoding.UTF8.GetBytes($"tree {rootSha1}\n");
-            var author = Encoding.UTF8.GetBytes("author Adriel <adriel@gmail.com> 1723200000 -0300\n");
-            var committer = Encoding.UTF8.GetBytes("committer Adriel <adriel@email.com> 1723200000 -0300\n");
+            var author = Encoding.UTF8.GetBytes($"author Adriel <adriel@gmail.com> {Utils.GetTimestamp()} {Utils.GetTimezone()}\n");
+            var committer = Encoding.UTF8.GetBytes($"committer Adriel <adriel@email.com> {Utils.GetTimestamp()} {Utils.GetTimezone()}\n");
             var message = Encoding.UTF8.GetBytes($"{args[1]}\n");
 
             commitStream.Write(tree, 0, tree.Length);
