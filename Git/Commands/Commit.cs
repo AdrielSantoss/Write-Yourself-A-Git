@@ -19,11 +19,19 @@ namespace Git.Commands
             using var commitStream = new MemoryStream();
 
             var tree = Encoding.UTF8.GetBytes($"tree {rootSha1}\n");
+            var parentSah1 = ReadHead();
+            var parent = !string.IsNullOrWhiteSpace(parentSah1) ? Encoding.UTF8.GetBytes($"parent {parentSah1}\n") : null;
             var author = Encoding.UTF8.GetBytes($"author Guest <author@gmail.com> {Utils.GetTimestamp()} {Utils.GetTimezone()}\n");
             var committer = Encoding.UTF8.GetBytes($"committer Guest <commiter@email.com> {Utils.GetTimestamp()} {Utils.GetTimezone()}\n");
             var message = Encoding.UTF8.GetBytes($"{args[1]}\n");
 
             commitStream.Write(tree, 0, tree.Length);
+
+            if(parent is not null)
+            {
+                commitStream.Write(parent, 0, parent.Length);
+            }
+
             commitStream.Write(author, 0, author.Length);
             commitStream.Write(committer, 0, committer.Length);
             commitStream.WriteByte(0x0A);
@@ -35,6 +43,7 @@ namespace Git.Commands
             var fullCommit = Utils.CombineBytes(Encoding.UTF8.GetBytes(header), commitContent);
             var commitSha1 = Utils.ComputeSha1(fullCommit);
 
+            ObjectStore.WriteObject(commitSha1, fullCommit);
             UpdateHead(commitSha1);
 
             Console.WriteLine(commitSha1);
@@ -46,6 +55,12 @@ namespace Git.Commands
         {
             var gitAdrDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
             File.WriteAllText(Path.Combine(gitAdrDir, "refs", "heads", "master"), commitSha1);
+        }
+
+        private static string ReadHead()
+        {
+            var gitAdrDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
+            return File.ReadAllText(Path.Combine(gitAdrDir, "refs", "heads", "master"));
         }
     }
 }
