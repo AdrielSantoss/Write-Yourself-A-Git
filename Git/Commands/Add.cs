@@ -23,17 +23,49 @@ namespace Git.Commands
             }
 
             var file = args[0];
+            var sha1 = HashObject.Execute(new string[] { "-w", file });
 
-            var content= File.ReadAllText(pathIndex);
-            var sha1 = HashObject.Execute(["-w", file]);
-            
-            if (content.Contains(sha1))
+            var content = File.ReadAllText(pathIndex);
+            var lines = string.IsNullOrWhiteSpace(content) ? Array.Empty<string>() : content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+
+            var newContentLines = new List<string>();
+            var found = false;
+
+            foreach (var line in lines)
             {
-                Console.WriteLine($"{file} já esta inserido na stage area.");
-                return;
+                var parts = line.Split(' ', 2);
+
+                if (parts.Length != 2)
+                    continue;
+
+                var fileSha1 = parts[0];
+                var fileName = parts[1];
+
+                if (fileName == file)
+                {
+                    found = true;
+                    if (fileSha1 == sha1)
+                    {
+                        Console.WriteLine($"{file} já está inserido na staging area.");
+                        return;
+                    }
+                    else
+                    {
+                        newContentLines.Add($"{sha1} {fileName}");
+                    }
+                }
+                else
+                {
+                    newContentLines.Add(line);
+                }
             }
-            
-            File.AppendAllText(pathIndex, $"{sha1} {file}\n");
+
+            if (!found)
+            {
+                newContentLines.Add($"{sha1} {file}");
+            }
+
+            File.WriteAllText(pathIndex, string.Join('\n', newContentLines) + "\n");
         }
     }
 }
