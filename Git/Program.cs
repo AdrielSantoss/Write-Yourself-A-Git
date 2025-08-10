@@ -35,6 +35,10 @@ switch (args[0])
         LsTree.Execute(args[1..]);
         break;
 
+    case "add":
+        Add.Execute(args[1..]);
+        break;
+
     case "commit":
         Commit.Execute(args[1..]);
         break;
