@@ -28,7 +28,7 @@ namespace Csharp.Commands
             {
                 var line = lines[i];
 
-               if (line.StartsWith("parent "))
+                if (line.StartsWith("parent "))
                     parent = line.Substring(7);
                 else if (line.StartsWith("author "))
                     author = line.Substring(7);
