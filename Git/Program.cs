@@ -39,6 +39,10 @@ switch (args[0])
         Add.Execute(args[1..]);
         break;
 
+    case "reset":
+        Reset.Execute(args[1..]);
+        break;
+
     case "commit":
         Commit.Execute(args[1..]);
         break;
