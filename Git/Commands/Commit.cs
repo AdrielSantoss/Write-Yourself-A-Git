@@ -15,10 +15,52 @@ namespace Git.Commands
                 return string.Empty;
             }
 
-            var rootSha1 = WriteTree.Execute();
+            var gitDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
+            var pathIndex = Path.Combine(gitDir, "index");
+
+            if (!File.Exists(pathIndex))
+            {
+                Console.WriteLine("Nenhum arquivo na staging area.");
+                return string.Empty;
+            }
+
+            var content = File.ReadAllText(pathIndex);
+
+            if (string.IsNullOrWhiteSpace(content)) 
+            {
+                Console.WriteLine("Nenhum arquivo na staging area.");
+                return string.Empty;
+            }
+
+            var lines = content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            var treeEntries = new List<TreeEntry>();
+
+            foreach (var line in lines)
+            {
+                var parts = line.Split(' ', 2);
+
+                if (parts.Length != 2)
+                    continue;
+
+                var fileSha1 = parts[0];
+                var fileName = parts[1];
+
+                treeEntries.Add(
+                    new TreeEntry()
+                    {
+                        Mode = "100644",
+                        Name = fileName,
+                        Sha1 = fileSha1,
+                    }
+                );
+            }
+
+            var rootSha1 = TreeObject.WriteTree(treeEntries);
+
             using var commitStream = new MemoryStream();
 
             var tree = Encoding.UTF8.GetBytes($"tree {rootSha1}\n");
+
             var parentSah1 = Utils.ReadLastCommitSha1();
             var parent = !string.IsNullOrWhiteSpace(parentSah1) ? Encoding.UTF8.GetBytes($"parent {parentSah1}\n") : null;
             var author = Encoding.UTF8.GetBytes($"author Guest <author@gmail.com> {Utils.GetTimestamp()} {Utils.GetTimezone()}\n");
