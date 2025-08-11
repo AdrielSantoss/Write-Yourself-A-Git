@@ -40,7 +40,7 @@ namespace Git.Commands
 
                 if (pathItems.Length > 1)
                 {
-                    pathItems = pathItems.Take(parts.Length - 1).ToArray();
+                    pathItems = pathItems.Take(pathItems.Length - 1).ToArray();
 
                     foreach (var item in pathItems.Reverse())
                     {
