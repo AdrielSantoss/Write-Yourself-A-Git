@@ -1,6 +1,8 @@
 ﻿
 using Csharp.Commands;
 using Csharp.Core;
+using Git.Core;
+using System;
 using System.Text;
 
 namespace Git.Commands
@@ -15,25 +17,9 @@ namespace Git.Commands
                 return string.Empty;
             }
 
-            var gitDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
-            var pathIndex = Path.Combine(gitDir, "index");
+            var lines = Utils.GetIndexFileContentLines();
 
-            if (!File.Exists(pathIndex))
-            {
-                Console.WriteLine("Nenhum arquivo na staging area.");
-                return string.Empty;
-            }
-
-            var content = File.ReadAllText(pathIndex);
-
-            if (string.IsNullOrWhiteSpace(content)) 
-            {
-                Console.WriteLine("Nenhum arquivo na staging area.");
-                return string.Empty;
-            }
-
-            var lines = content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-            var treeEntries = new List<TreeEntry>();
+            var rootSha1 = "";
 
             foreach (var line in lines)
             {
@@ -43,50 +29,54 @@ namespace Git.Commands
                     continue;
 
                 var fileSha1 = parts[0];
-                var fileName = parts[1];
+                var path = parts[1];
 
-                treeEntries.Add(
-                    new TreeEntry()
+                var pathItems = path.TrimStart('/').Split('/').ToArray();
+                var file = pathItems.Last();
+
+                var currentSha1 = fileSha1;
+                var currentName = file;
+                var currentMode = "100644";
+
+                if (pathItems.Length > 1)
+                {
+                    pathItems = pathItems.Take(parts.Length - 1).ToArray();
+
+                    foreach (var item in pathItems.Reverse())
                     {
-                        Mode = "100644",
-                        Name = fileName,
-                        Sha1 = fileSha1,
+                        currentSha1 = TreeObject.WriteTree(
+                        new List<TreeEntry>() {
+                        new TreeEntry()
+                            {
+                                Mode = currentMode,
+                                Name = currentName,
+                                Sha1 = currentSha1
+                            }
+                            }
+                        );
+
+                        currentName = item;
+                        currentMode = "040000";
+                    }
+                }
+
+                rootSha1 = TreeObject.WriteTree(
+                    new List<TreeEntry>() {
+                        new TreeEntry()
+                        {
+                            Mode = currentMode,
+                            Name = currentName,
+                            Sha1 = currentSha1
+                        }
                     }
                 );
             }
 
-            var rootSha1 = TreeObject.WriteTree(treeEntries);
+            var commitSha1 = CommitObject.WriteCommit(rootSha1, args[1]);
 
-            using var commitStream = new MemoryStream();
-
-            var tree = Encoding.UTF8.GetBytes($"tree {rootSha1}\n");
-
-            var parentSah1 = Utils.ReadLastCommitSha1();
-            var parent = !string.IsNullOrWhiteSpace(parentSah1) ? Encoding.UTF8.GetBytes($"parent {parentSah1}\n") : null;
-            var author = Encoding.UTF8.GetBytes($"author Guest <author@gmail.com> {Utils.GetTimestamp()} {Utils.GetTimezone()}\n");
-            var committer = Encoding.UTF8.GetBytes($"committer Guest <commiter@email.com> {Utils.GetTimestamp()} {Utils.GetTimezone()}\n");
-            var message = Encoding.UTF8.GetBytes($"{args[1]}\n");
-
-            commitStream.Write(tree, 0, tree.Length);
-
-            if(parent is not null)
-            {
-                commitStream.Write(parent, 0, parent.Length);
-            }
-
-            commitStream.Write(author, 0, author.Length);
-            commitStream.Write(committer, 0, committer.Length);
-            commitStream.WriteByte(0x0A);
-            commitStream.Write(message, 0, message.Length);
-
-            var commitContent = commitStream.ToArray();
-            var header = $"commit {commitContent.Length}\0";
-
-            var fullCommit = Utils.CombineBytes(Encoding.UTF8.GetBytes(header), commitContent);
-            var commitSha1 = Utils.ComputeSha1(fullCommit);
-
-            ObjectStore.WriteObject(commitSha1, fullCommit);
             UpdateHead(commitSha1);
+
+            Utils.WriteIndexFile(string.Empty);
 
             Console.WriteLine(commitSha1);
 

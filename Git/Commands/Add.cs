@@ -14,19 +14,11 @@ namespace Git.Commands
                 return;
             }
 
-            var gitDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
-            var pathIndex = Path.Combine(gitDir, "index");
-
-            if (!File.Exists(pathIndex))
-            {
-                File.WriteAllText(pathIndex, string.Empty);
-            }
-
             var file = args[0];
+
             var sha1 = HashObject.Execute(new string[] { "-w", file });
 
-            var content = File.ReadAllText(pathIndex);
-            var lines = string.IsNullOrWhiteSpace(content) ? Array.Empty<string>() : content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            var lines = Utils.GetIndexFileContentLines(true);
 
             var newContentLines = new List<string>();
             var found = false;
@@ -65,7 +57,7 @@ namespace Git.Commands
                 newContentLines.Add($"{sha1} {file}");
             }
 
-            File.WriteAllText(pathIndex, string.Join('\n', newContentLines) + "\n");
+            Utils.WriteIndexFile(string.Join('\n', newContentLines) + "\n");
         }
     }
 }
