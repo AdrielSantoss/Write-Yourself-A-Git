@@ -36,7 +36,6 @@ namespace Git.Commands
                 if (parts.Length != 2)
                     continue;
 
-                var fileSha1 = parts[0];
                 var fileName = parts[1];
 
                 if (fileName == file)
