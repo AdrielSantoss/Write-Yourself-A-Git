@@ -10,10 +10,16 @@ Este projeto é uma implementação educacional de comandos básicos do Git em C
     - `Init.cs` - Inicializa um novo repositório Git.
     - `HashObject.cs` - Calcula o hash SHA-1 de arquivos e armazena como blobs.
     - `CatFile.cs` - Exibe o conteúdo de objetos armazenados.
-    - `WriteTree.cs` - Calcula o hash SHA-1 de arquivos e diretórios armazena como blobs e trees.
+    - `WriteTree.cs` - Calcula o hash SHA-1 de arquivos e diretórios, armazena como blobs e trees.
+    - `Add.cs` - Adiciona arquivos ao índice.
+    - `Commit.cs` - Cria um commit com os objetos atuais.
+    - `LsTree.cs` - Lista o conteúdo de uma tree.
+    - `Reset.cs` - Reseta o HEAD para um commit específico.
+    - `Log.cs` - Exibe o histórico de commits.
   - `Core/` - Lógica interna para manipulação de objetos Git:
     - `ObjectStore.cs` - Gerenciamento de armazenamento de objetos.
     - `TreeObject.cs` - Manipulação de árvores de objetos.
+    - `CommitObject.cs` - Manipulação de objetos commit.
 - `Git.Core/` - Utilitários e funções de apoio para o funcionamento dos comandos.
 - `Git.Test/` - Testes automatizados para os comandos implementados.
 
@@ -27,6 +33,11 @@ Este projeto é uma implementação educacional de comandos básicos do Git em C
 - Hash e armazenamento de arquivos (`hash-object`)
 - Exibição de objetos (`cat-file`)
 - Hash e armazenamento de arquivos e diretórios (`write-tree`)
+- Adição ao índice (`add`)
+- Commit (`commit`)
+- Listagem de trees (`ls-tree`)
+- Reset de HEAD (`reset`)
+- Log de commits (`log`)
 
 ## 🛠️ Funcionalidades planejadas
 - Implementação de outros comandos do Git
@@ -38,4 +49,4 @@ Este projeto é uma implementação educacional de comandos básicos do Git em C
 - Documentação oficial do Git
 
 ---
-Adriel Santos
+Adriel
