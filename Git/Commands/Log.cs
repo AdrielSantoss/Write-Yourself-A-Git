@@ -5,13 +5,13 @@ namespace Csharp.Commands
 {
     public class Log
     {
-        public static void Execute()
+        public static List<string> Execute()
         {
             var lastCommitSha1 = Utils.ReadLastCommitSha1();
-            ReadCommitsRecursive(lastCommitSha1, true);
+            return ReadCommitsRecursive(lastCommitSha1, true, new List<string>());
         }
 
-        public static void ReadCommitsRecursive(string commitSha1, bool isHead)
+        public static List<string> ReadCommitsRecursive(string commitSha1, bool isHead, List<string> result)
         {
             var data = Utils.GetObjectDataBySha1(commitSha1);
             var nullIndex = Array.IndexOf(data, (byte)0);
@@ -64,14 +64,25 @@ namespace Csharp.Commands
                 }
             }
 
-            Console.WriteLine($"commit {commitSha1}{(isHead ? " (HEAD -> master)" : string.Empty)}");
-            Console.WriteLine($"Author: {authorNameEmail}");
-            Console.WriteLine($"Date: {dateString}\n");
-            Console.WriteLine($"    {message.Replace("\n", "\n    ")}\n");
+            var output = $@"
+commit {commitSha1}{(isHead ? " (HEAD -> master)" : string.Empty)}
+Author: {authorNameEmail}
+Date: {dateString}
+
+    {message.Replace("\n", "\n    ")}
+";
+
+            Console.WriteLine(output);
+
+            result.Add(output);
 
             if (!string.IsNullOrEmpty(parent))
             {
-                ReadCommitsRecursive(parent, false);
+                return ReadCommitsRecursive(parent, false, result);
+            } 
+            else
+            {
+                return result;
             }
         }
     }
