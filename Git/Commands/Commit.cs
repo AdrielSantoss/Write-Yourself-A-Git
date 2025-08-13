@@ -80,7 +80,6 @@ namespace Git.Commands
 
             Console.WriteLine(commitSha1);
 
-            return string.Empty;
             return commitSha1;
         }
 
