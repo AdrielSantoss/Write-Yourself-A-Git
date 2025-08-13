@@ -9,6 +9,9 @@ namespace Git.Test
         [Fact]
         public void LsTree_WriteTreeAndCompareTreeContent()
         {
+            var stringWriter = new StringWriter();
+            Console.SetOut(stringWriter);
+
             var (workSpace, treeSha1) = WriteTreeTest.CreateWorksSpace_AndWriteTree();
 
             var lsTreeContent = LsTree.Execute(["-p", treeSha1]);
@@ -17,6 +20,8 @@ namespace Git.Test
                 "100644 blob 27f041740e69694eabbff7d2af994397778a8c51 teste.txt040000 tree a0fdb95f4eda2142cafbc0829b9e987239a43dcf src", 
                 lsTreeContent
             );
+
+            Console.SetOut(new StreamWriter(Console.OpenStandardOutput()) { AutoFlush = true });
         }
     }
 }

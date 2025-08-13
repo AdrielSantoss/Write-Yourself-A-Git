@@ -2,10 +2,15 @@
 
 namespace Csharp.Test.Configs
 {
-    public class InitFixture
+    public class InitFixture : IDisposable
     {
+        private readonly TextWriter _originalConsole;
+
         public InitFixture()
         {
+            _originalConsole = Console.Out;
+            Console.SetOut(TextWriter.Null);
+
             var gitAdrDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
 
             if (Directory.Exists(gitAdrDir))
@@ -34,6 +39,11 @@ namespace Csharp.Test.Configs
             Assert.True(
                 File.Exists(Path.Combine(gitAdrDir, "refs", "heads", "master")),
                 "Arquivo 'master' não encontrado.");
+        }
+
+        public void Dispose()
+        {
+            Console.SetOut(_originalConsole);
         }
     }
 }

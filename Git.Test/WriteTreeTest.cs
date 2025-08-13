@@ -65,11 +65,17 @@ namespace Csharp.Test
         [Fact]
         public void WriteTree_CreateBlobsAndTreeObjects()
         {
+            var stringWriter = new StringWriter();
+            Console.SetOut(stringWriter);
+
             var (workSpace, expectedRootSha1) = CreateWorksSpace_AndWriteTree();
 
             var actualRootSha1 = WriteTree.WriteTreeRecursive(workSpace);
 
             Assert.Equal(expectedRootSha1, actualRootSha1);
+
+            Console.SetOut(new StreamWriter(Console.OpenStandardOutput()) { AutoFlush = true });
+
         }
     }
 }
