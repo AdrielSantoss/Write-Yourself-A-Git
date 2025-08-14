@@ -16,7 +16,7 @@ namespace Git.Commands
 
             var existHeadFile = Utils.GetBranchFileContent(branchName);
 
-            if (existHeadFile == null)
+            if (existHeadFile != null)
             {
                 Console.WriteLine($"Já existe um branch com o nome {branchName}");
                 return;
@@ -24,7 +24,7 @@ namespace Git.Commands
 
             var lastCommitSha1 = Utils.ReadLastCommitSha1();
 
-            Utils.WriteBranchFile(branchName, lastCommitSha1);
+            Utils.WriteBranchFile($"refs/heads/{branchName}", lastCommitSha1);
 
             Console.WriteLine($"Branch {branchName} criado com sucesso");
         }

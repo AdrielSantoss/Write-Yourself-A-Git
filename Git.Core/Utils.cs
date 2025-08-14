@@ -104,7 +104,10 @@ namespace Csharp.Core
         public static string ReadLastCommitSha1()
         {
             var gitAdrDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
-            return File.ReadAllText(Path.Combine(gitAdrDir, "refs", "heads", "master"));
+            var refs = GetHeadFileContent();
+            var parts = refs.Split(" ", 2);
+
+            return File.ReadAllText(Path.Combine(gitAdrDir, parts[1]));
         }
 
         public static string[] GetIndexFileContentLines(bool createIndexFile = false)
@@ -140,30 +143,46 @@ namespace Csharp.Core
         public static void WriteIndexFile(string newContenet)
         {
             var gitDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
-            var pathIndex = Path.Combine(gitDir, "index");
+            var path = Path.Combine(gitDir, "index");
 
-            File.WriteAllText(pathIndex, newContenet);
+            File.WriteAllText(path, newContenet);
         }
 
-        public static string? GetBranchFileContent(string headFileName)
+        public static string GetHeadFileContent()
         {
             var gitDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
-            var pathIndex = Path.Combine(gitDir, "refs/heads", headFileName);
+            var path = Path.Combine(gitDir, "HEAD");
 
-            if (!File.Exists(pathIndex))
+            return File.ReadAllText(path);
+        }
+
+        public static void WriteHeadFileContent(string headRefs)
+        {
+            var gitDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
+            var path = Path.Combine(gitDir, "HEAD");
+
+            File.WriteAllText(path, headRefs);
+        }
+
+        public static string? GetBranchFileContent(string branchFileName)
+        {
+            var gitDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
+            var path = Path.Combine(gitDir, "refs/heads", branchFileName);
+
+            if (!File.Exists(path))
             {
                 return null;
             }
 
-            return File.ReadAllText(pathIndex);
+            return File.ReadAllText(path);
         }
 
-        public static void WriteBranchFile(string headFileName, string commitSha1)
+        public static void WriteBranchFile(string branchPath, string commitSha1)
         {
             var gitDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
-            var pathIndex = Path.Combine(gitDir, "refs/heads", headFileName);
+            var path = Path.Combine(gitDir, branchPath);
 
-            File.WriteAllText(pathIndex, commitSha1);
+            File.WriteAllText(path, commitSha1);
         }
     }
 }

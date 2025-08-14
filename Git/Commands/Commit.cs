@@ -90,8 +90,10 @@ namespace Git.Commands
 
         private static void UpdateHead(string commitSha1)
         {
-            var gitAdrDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
-            File.WriteAllText(Path.Combine(gitAdrDir, "refs", "heads", "master"), commitSha1);
+            var refs = Utils.GetHeadFileContent();
+            var parts = refs.Split(" ", 2);
+
+            Utils.WriteBranchFile(parts[1], commitSha1);
         }
     }
 }
