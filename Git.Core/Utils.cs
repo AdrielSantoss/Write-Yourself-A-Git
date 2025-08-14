@@ -118,7 +118,6 @@ namespace Csharp.Core
                 {
                     File.WriteAllText(pathIndex, string.Empty);
                 }
-                    
 
                 return Array.Empty<string>();
             }
@@ -138,13 +137,33 @@ namespace Csharp.Core
             return content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
         }
 
-
         public static void WriteIndexFile(string newContenet)
         {
             var gitDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
             var pathIndex = Path.Combine(gitDir, "index");
 
             File.WriteAllText(pathIndex, newContenet);
+        }
+
+        public static string? GetBranchFileContent(string headFileName)
+        {
+            var gitDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
+            var pathIndex = Path.Combine(gitDir, "refs/heads", headFileName);
+
+            if (!File.Exists(pathIndex))
+            {
+                return null;
+            }
+
+            return File.ReadAllText(pathIndex);
+        }
+
+        public static void WriteBranchFile(string headFileName, string commitSha1)
+        {
+            var gitDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
+            var pathIndex = Path.Combine(gitDir, "refs/heads", headFileName);
+
+            File.WriteAllText(pathIndex, commitSha1);
         }
     }
 }

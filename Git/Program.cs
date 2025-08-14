@@ -51,6 +51,10 @@ switch (args[0])
         Log.Execute();
         break;
 
+    case "branch":
+        Branch.Execute(args[1..]);
+        break;
+
     default:
         Console.WriteLine($"Comando desconhecido: {args[0]}");
         break;
