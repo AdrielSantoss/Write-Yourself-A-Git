@@ -19,6 +19,11 @@ namespace Git.Commands
 
             var lines = Utils.GetIndexFileContentLines();
 
+            if (!lines.Any())
+            {
+                throw new Exception("Nenhum arquivo na staging area.");
+            }
+
             var rootSha1 = "";
 
             foreach (var line in lines)

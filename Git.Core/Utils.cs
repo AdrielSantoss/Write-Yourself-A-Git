@@ -111,37 +111,33 @@ namespace Csharp.Core
         {
             var gitDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
             var pathIndex = Path.Combine(gitDir, "index");
-            var content = string.Empty;
-            var isExist = true;
 
-            if(File.Exists(pathIndex))
+            if (!File.Exists(pathIndex))
             {
-                content = File.ReadAllText(pathIndex);
-
-                if (string.IsNullOrWhiteSpace(content) && !createIndexFile)
+                if (createIndexFile)
                 {
-                    isExist = false;
+                    File.WriteAllText(pathIndex, string.Empty);
                 }
-            }
-            else 
-            {
-                isExist = false;
+                    
+
+                return Array.Empty<string>();
             }
 
-            if (!isExist)
+            var content = File.ReadAllText(pathIndex);
+
+            if (string.IsNullOrWhiteSpace(content))
             {
                 if (createIndexFile)
                 {
                     File.WriteAllText(pathIndex, content);
                 }
-                else
-                {
-                    throw new Exception("Nenhum arquivo na staging area.");
-                }
+
+                return Array.Empty<string>();
             }
 
-            return string.IsNullOrWhiteSpace(content) ? Array.Empty<string>() : content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            return content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
         }
+
 
         public static void WriteIndexFile(string newContenet)
         {
