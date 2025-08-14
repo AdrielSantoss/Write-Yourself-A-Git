@@ -6,7 +6,7 @@ namespace Csharp.Commands
 {
     public class WriteTree
     {
-        private static readonly string[] ignoreFiles = { ".gitadr", "Program.cs", "Git.csproj", "bin", "Commands", "Core", "obj", ".vs" };
+        public static readonly string[] ignoreFiles = { ".gitadr", "Program.cs", "Git.csproj", "bin", "Commands", "Core", "obj", ".vs" };
 
         public static string Execute()
         {
