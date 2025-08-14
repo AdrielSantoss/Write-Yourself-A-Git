@@ -10,7 +10,13 @@ namespace Git.Commands
         {
             Console.WriteLine(Utils.GetHeadFileContent());
 
-            foreach (var file in Directory.GetFiles(Directory.GetCurrentDirectory()))
+            ExecuteRecursive(Directory.GetCurrentDirectory());
+        }
+
+        public static void ExecuteRecursive(string directory)
+        {
+
+            foreach (var file in Directory.GetFiles(directory))
             {
                 if (WriteTree.ignoreFiles.Any(ignore => file.Contains(ignore)))
                 {
@@ -26,19 +32,19 @@ namespace Git.Commands
 
                 if (currentLineWithFile == null)
                 {
-                    Console.WriteLine($"Arquivo novo: {file}");
+                    Console.WriteLine($"Arquivo novo: {fileName}");
                 }
                 else
                 {
                     var parts = currentLineWithFile.Split(' ', 2);
                     var lineFileSha1 = parts[0];
-                    var lineFileName = parts[1];
+                    var lineFileName = Path.GetFileName(parts[1]);
 
                     if (fileName == lineFileName)
                     {
                         if (sha1 == lineFileSha1)
                         {
-                            Console.WriteLine($"Arquivo na staging area: {fileName}");
+                            Console.WriteLine($"Arquivo na staging area: {parts[1]}");
                         }
                         else
                         {
@@ -46,6 +52,16 @@ namespace Git.Commands
                         }
                     }
                 }
+            }
+
+            foreach (var subdir in Directory.GetDirectories(directory))
+            {
+                if (WriteTree.ignoreFiles.Any(ignore => subdir.Contains(ignore)))
+                {
+                    continue;
+                }
+
+                ExecuteRecursive(subdir);
             }
         }
     }
