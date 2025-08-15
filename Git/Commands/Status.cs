@@ -8,7 +8,9 @@ namespace Git.Commands
     {
         public static void Execute()
         {
-            Console.WriteLine(Utils.GetHeadFileContent());
+            var headFileContent = Utils.GetHeadFileContent();
+            Console.WriteLine(headFileContent.Replace(@"ref: refs\heads\", "On branch "));
+            Console.WriteLine();
 
             ExecuteRecursive(Directory.GetCurrentDirectory());
         }
@@ -23,7 +25,7 @@ namespace Git.Commands
                     continue;
                 }
 
-                var fileName = Path.GetFileName(file);
+                var fileName = Path.GetRelativePath(Directory.GetCurrentDirectory(), file);
 
                 var (sha1, fullBlob) = Utils.WriteBlob(file);
 
@@ -32,23 +34,23 @@ namespace Git.Commands
 
                 if (currentLineWithFile == null)
                 {
-                    Console.WriteLine($"Arquivo novo: {fileName}");
+                    ConsoleWithColor($"Untracked: {fileName}", ConsoleColor.Red);
                 }
                 else
                 {
-                    var parts = currentLineWithFile.Split(' ', 2);
+                    var parts = currentLineWithFile.Split(' ', 2); 
                     var lineFileSha1 = parts[0];
                     var lineFileName = Path.GetFileName(parts[1]);
 
-                    if (fileName == lineFileName)
+                    if (Path.GetFileName(fileName) == lineFileName)
                     {
                         if (sha1 == lineFileSha1)
                         {
-                            Console.WriteLine($"Arquivo na staging area: {parts[1]}");
+                            ConsoleWithColor($"Staged: {parts[1]}", ConsoleColor.Green);
                         }
                         else
                         {
-                            Console.WriteLine($"Arquivo alterado: {fileName}");
+                            ConsoleWithColor($"Modified: {parts[1]}", ConsoleColor.Red);
                         }
                     }
                 }
@@ -63,6 +65,13 @@ namespace Git.Commands
 
                 ExecuteRecursive(subdir);
             }
+        }
+
+        public static void ConsoleWithColor(string message, ConsoleColor color)
+        {
+            Console.ForegroundColor = color;
+            Console.WriteLine(message);
+            Console.ResetColor();
         }
     }
 }
