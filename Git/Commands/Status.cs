@@ -44,11 +44,7 @@ namespace Git.Commands
 
                     if (Path.GetFileName(fileName) == lineFileName)
                     {
-                        if (sha1 == lineFileSha1)
-                        {
-                            ConsoleWithColor($"Staged: {parts[1]}", ConsoleColor.Green);
-                        }
-                        else
+                        if (sha1 != lineFileSha1)
                         {
                             ConsoleWithColor($"Modified: {parts[1]}", ConsoleColor.Red);
                         }
