@@ -16,6 +16,12 @@ namespace Git.Commands
 
             var fileOrDirectory = args[0];
 
+            if (fileOrDirectory == ".")
+            {
+                ExecuteRecursive(Directory.GetCurrentDirectory());
+                return;
+            }
+
             if (!File.Exists(fileOrDirectory) && !Directory.Exists(fileOrDirectory))
             {
                 Console.WriteLine("Arquivo ou diretório não encontrado.");
@@ -24,68 +30,84 @@ namespace Git.Commands
 
             if (!File.Exists(fileOrDirectory) && Directory.Exists(fileOrDirectory)) 
             {
-                AddOrUpdateIndexFile(Directory.GetFiles(fileOrDirectory).ToList());
+                ExecuteRecursive(fileOrDirectory);
                 return;
             }
 
             if (File.Exists(fileOrDirectory) && !Directory.Exists(fileOrDirectory))
             {
-                AddOrUpdateIndexFile(
-                    new List<string>()
-                    {
-                        fileOrDirectory
-                    }
-                );
+                AddOrUpdateIndexFile(fileOrDirectory);
+                return;
             }
         }
 
-        public static void AddOrUpdateIndexFile(List<string> files)
+        public static void ExecuteRecursive(string directory)
         {
-            foreach (var file in files)
+            foreach (var file in Directory.GetFiles(directory))
             {
-                var sha1 = HashObject.Execute(new string[] { "-w", file });
-
-                var lines = Utils.GetIndexFileContentLines(true);
-
-                var newContentLines = new List<string>();
-                var found = false;
-
-                foreach (var line in lines)
+                if (WriteTree.ignoreFiles.Any(ignore => file.Contains(ignore)))
                 {
-                    var parts = line.Split(' ', 2);
+                    continue;
+                }
 
-                    if (parts.Length != 2)
-                        continue;
+                AddOrUpdateIndexFile(file);
+            }
 
-                    var fileSha1 = parts[0];
-                    var fileName = parts[1];
+            foreach (var subdir in Directory.GetDirectories(directory))
+            {
+                if (WriteTree.ignoreFiles.Any(ignore => subdir.Contains(ignore)))
+                {
+                    continue;
+                }
 
-                    if (fileName == file)
+                ExecuteRecursive(subdir);
+            }
+        }
+
+        public static void AddOrUpdateIndexFile(string file)
+        {
+            var sha1 = HashObject.Execute(new string[] { "-w", file });
+
+            var lines = Utils.GetIndexFileContentLines(true);
+
+            var newContentLines = new List<string>();
+            var found = false;
+
+            foreach (var line in lines)
+            {
+                var parts = line.Split(' ', 2);
+
+                if (parts.Length != 2)
+                    continue;
+
+                var fileSha1 = parts[0];
+                var fileName = parts[1];
+
+                if (fileName == file)
+                {
+                    found = true;
+                    if (fileSha1 == sha1)
                     {
-                        found = true;
-                        if (fileSha1 == sha1)
-                        {
-                            Console.WriteLine($"{file} já está inserido na staging area.");
-                            return;
-                        }
-                        else
-                        {
-                            newContentLines.Add($"{sha1} {fileName}");
-                        }
+                        Console.WriteLine($"{file} já está inserido na staging area.");
+                        return;
                     }
                     else
                     {
-                        newContentLines.Add(line);
+                        newContentLines.Add($"{sha1} {fileName}");
                     }
                 }
-
-                if (!found)
+                else
                 {
-                    newContentLines.Add($"{sha1} {file}");
+                    newContentLines.Add(line);
                 }
-
-                Utils.WriteIndexFile(string.Join('\n', newContentLines) + "\n");
             }
+
+            if (!found)
+            {
+                newContentLines.Add($"{sha1} {file}");
+            }
+
+            Utils.WriteIndexFile(string.Join('\n', newContentLines) + "\n");
         }
     }
 }
