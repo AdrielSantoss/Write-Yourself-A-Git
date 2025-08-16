@@ -1,4 +1,5 @@
 ﻿using Csharp.Core;
+using Git.Core;
 using System.Text;
 
 namespace Csharp.Commands
@@ -7,13 +8,13 @@ namespace Csharp.Commands
     {
         public static List<string> Execute()
         {
-            var lastCommitSha1 = Utils.ReadLastCommitSha1();
+            var lastCommitSha1 = CommitUtils.GetLastCommitSha1FromHead();
             return ReadCommitsRecursive(lastCommitSha1, true, new List<string>());
         }
 
         public static List<string> ReadCommitsRecursive(string commitSha1, bool isHead, List<string> result)
         {
-            var data = Utils.GetObjectDataBySha1(commitSha1);
+            var data = Sha1Utils.GetObjectDataBySha1(commitSha1);
             var nullIndex = Array.IndexOf(data, (byte)0);
             var content = Encoding.UTF8.GetString(data[(nullIndex + 1)..]);
 

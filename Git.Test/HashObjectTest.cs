@@ -1,6 +1,6 @@
 ﻿using Csharp.Commands;
-using Csharp.Core;
 using Csharp.Test.Configs;
+using Git.Core;
 using System.Text;
 
 namespace Csharp.Test
@@ -18,7 +18,7 @@ namespace Csharp.Test
 
             HashObject.Execute(["-w", fileName]);
 
-            var sha1Expected = Utils.GetSha1FromBlob(fileName);
+            var sha1Expected = BlobUtils.GetSha1FromBlob(fileName);
             var pathObject = Path.Combine(gitAdrDir, "objects", sha1Expected.Substring(0, 2));
 
             Assert.True(File.Exists(Path.Combine(pathObject, sha1Expected.Substring(2))), "Objeto não encontrado.");

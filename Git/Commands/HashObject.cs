@@ -1,7 +1,5 @@
 ﻿using Csharp.Core;
-using System.Reflection.Metadata;
-using System.Security.Cryptography;
-using System.Text;
+using Git.Core;
 
 namespace Csharp.Commands
 {
@@ -23,7 +21,7 @@ namespace Csharp.Commands
                 throw new Exception($"Arquivo não encontrado: {path}");
             }
 
-            var (sha1Hash, fullBlob) = Utils.WriteBlob(path);
+            var (sha1Hash, fullBlob) = BlobUtils.WriteBlob(path);
             Console.WriteLine(sha1Hash);
 
             if (write)

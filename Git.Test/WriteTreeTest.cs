@@ -1,5 +1,6 @@
 ﻿using Csharp.Commands;
 using Csharp.Core;
+using Git.Core;
 using System.Text;
 
 namespace Csharp.Test
@@ -26,8 +27,8 @@ namespace Csharp.Test
 
             var contentFileBytes = File.ReadAllBytes(filePath);
             var blobHeader = $"blob {contentFileBytes.Length}\0";
-            var fullBlob = Utils.CombineBytes(Encoding.UTF8.GetBytes(blobHeader), contentFileBytes);
-            var blobSha1 = Utils.ComputeSha1(fullBlob);
+            var fullBlob = Sha1Utils.CombineBytes(Encoding.UTF8.GetBytes(blobHeader), contentFileBytes);
+            var blobSha1 = Sha1Utils.CreateSha1FromByteData(fullBlob);
             ObjectStore.WriteObject(blobSha1, fullBlob);
 
             var treeEntriesSrc = new List<TreeEntry>
@@ -75,7 +76,6 @@ namespace Csharp.Test
             Assert.Equal(expectedRootSha1, actualRootSha1);
 
             Console.SetOut(new StreamWriter(Console.OpenStandardOutput()) { AutoFlush = true });
-
         }
     }
 }

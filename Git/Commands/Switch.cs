@@ -1,4 +1,5 @@
 ﻿using Csharp.Core;
+using Git.Core;
 
 namespace Git.Commands
 {
@@ -14,7 +15,7 @@ namespace Git.Commands
 
             var branchName = args[0];
 
-            var existHeadFile = Utils.GetBranchFileContent(branchName);
+            var existHeadFile = BranchUtils.GetCommitHeadFromBranch(branchName);
 
             if (existHeadFile == null)
             {
@@ -22,7 +23,7 @@ namespace Git.Commands
                 return;
             }
 
-            Utils.WriteHeadFileContent(@$"ref: refs\heads\{branchName}");
+            BranchUtils.WriteHead(@$"ref: refs\heads\{branchName}");
 
             Console.WriteLine($"Branch atual alterado com sucesso para {branchName}");
         }

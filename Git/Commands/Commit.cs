@@ -1,5 +1,4 @@
-﻿
-using Csharp.Core;
+﻿using Csharp.Core;
 using Git.Core;
 
 namespace Git.Commands
@@ -14,7 +13,7 @@ namespace Git.Commands
                 return string.Empty;
             }
 
-            var lines = Utils.GetIndexFileContentLines();
+            var lines = CommitUtils.GetIndexEntries();
 
             if (!lines.Any())
             {
@@ -69,17 +68,17 @@ namespace Git.Commands
 
             Console.WriteLine(commitSha1);
 
-            Utils.WriteIndexFile(string.Empty);
+            CommitUtils.CreateOrUpdateIndex(string.Empty);
 
             return commitSha1;
         }
 
         private static void UpdateHead(string commitSha1)
         {
-            var refs = Utils.GetHeadFileContent();
+            var refs = BranchUtils.GetHead();
             var parts = refs.Split(" ", 2);
 
-            Utils.WriteBranchFile(parts[1], commitSha1);
+            BranchUtils.CreateOrUpdateBranch(parts[1], commitSha1);
         }
     }
 }

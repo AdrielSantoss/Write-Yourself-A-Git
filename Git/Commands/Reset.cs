@@ -1,4 +1,5 @@
 ﻿using Csharp.Commands;
+using Git.Core;
 
 namespace Git.Commands
 {
@@ -55,7 +56,7 @@ namespace Git.Commands
                 return;
             }
 
-            File.WriteAllText(pathIndex, string.Join('\n', newContentLines));
+            CommitUtils.CreateOrUpdateIndex(string.Join('\n', newContentLines) + "\n");
             Console.WriteLine($"Arquivo '{file}' removido da staging area.");
         }
     }

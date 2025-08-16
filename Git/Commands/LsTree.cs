@@ -1,5 +1,6 @@
 ﻿
 using Csharp.Core;
+using Git.Core;
 using System.Text;
 
 namespace Git.Commands
@@ -14,7 +15,7 @@ namespace Git.Commands
                 return string.Empty;
             }
 
-            var data = Utils.GetObjectDataBySha1(args[1]);
+            var data = Sha1Utils.GetObjectDataBySha1(args[1]);
             var nullIndexHeader = Array.IndexOf(data, (byte)0);
             var content = data.Skip(nullIndexHeader + 1).ToArray();
 
@@ -30,7 +31,7 @@ namespace Git.Commands
                 var name = Encoding.UTF8.GetString(content, modeEnd + 1, nameEnd - (modeEnd + 1));
 
                 var sha1Bytes = content.Skip(nameEnd + 1).Take(20).ToArray();
-                var sha1 = Utils.Sha1BytesToString(sha1Bytes);
+                var sha1 = Sha1Utils.Sha1BytesToString(sha1Bytes);
 
                 var type = mode == "040000" ? "tree" : "blob";
 

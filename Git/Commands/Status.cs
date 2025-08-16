@@ -1,6 +1,6 @@
 ﻿using Csharp.Commands;
 using Csharp.Core;
-using System.IO;
+using Git.Core;
 
 namespace Git.Commands
 {
@@ -8,16 +8,15 @@ namespace Git.Commands
     {
         public static void Execute()
         {
-            var headFileContent = Utils.GetHeadFileContent();
-            Console.WriteLine(headFileContent.Replace(@"ref: refs\heads\", "On branch "));
-            Console.WriteLine();
+            var headFileContent = BranchUtils.GetHead();
+            Console.WriteLine(headFileContent.Replace(@"ref: refs\heads\", "On branch ") + "\n");
 
             ExecuteRecursive(Directory.GetCurrentDirectory());
         }
 
+        // continuar aqui, status deve olhar pra HEAD
         public static void ExecuteRecursive(string directory)
         {
-
             foreach (var file in Directory.GetFiles(directory))
             {
                 if (WriteTree.ignoreFiles.Any(ignore => file.Contains(ignore)))
@@ -26,10 +25,11 @@ namespace Git.Commands
                 }
 
                 var fileName = Path.GetRelativePath(Directory.GetCurrentDirectory(), file);
+                var sha1 = BlobUtils.WriteBlob(file).sha1;
 
-                var (sha1, fullBlob) = Utils.WriteBlob(file);
+                var lastCommitSha1 = CommitUtils.GetLastCommitSha1FromHead();
 
-                var indexLines = Utils.GetIndexFileContentLines();
+                var indexLines = CommitUtils.GetIndexEntries();
                 var currentLineWithFile = indexLines.FirstOrDefault(line => line.Contains(fileName));
 
                 if (currentLineWithFile == null)

@@ -1,5 +1,4 @@
-﻿using Csharp.Commands;
-using Csharp.Test;
+﻿using Csharp.Test;
 using Git.Commands;
 
 namespace Git.Test

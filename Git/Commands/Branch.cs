@@ -1,4 +1,4 @@
-﻿using Csharp.Core;
+﻿using Git.Core;
 
 namespace Git.Commands
 {
@@ -14,7 +14,7 @@ namespace Git.Commands
 
             var branchName = args[0];
 
-            var existHeadFile = Utils.GetBranchFileContent(branchName);
+            var existHeadFile = BranchUtils.GetCommitHeadFromBranch(branchName);
 
             if (existHeadFile != null)
             {
@@ -22,9 +22,9 @@ namespace Git.Commands
                 return;
             }
 
-            var lastCommitSha1 = Utils.ReadLastCommitSha1();
+            var lastCommitSha1 = CommitUtils.GetLastCommitSha1FromHead();
 
-            Utils.WriteBranchFile($"refs/heads/{branchName}", lastCommitSha1);
+            BranchUtils.CreateOrUpdateBranch($"refs/heads/{branchName}", lastCommitSha1);
 
             Console.WriteLine($"Branch {branchName} criado com sucesso");
         }

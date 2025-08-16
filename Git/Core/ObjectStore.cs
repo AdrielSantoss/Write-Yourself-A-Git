@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO.Compression;
-using System.Text;
+﻿using System.IO.Compression;
 
 namespace Csharp.Core
 {

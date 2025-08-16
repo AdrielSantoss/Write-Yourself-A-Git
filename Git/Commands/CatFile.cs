@@ -1,4 +1,4 @@
-﻿using Csharp.Core;
+﻿using Git.Core;
 using System.Text;
 
 namespace Csharp.Commands
@@ -13,7 +13,7 @@ namespace Csharp.Commands
                 return string.Empty;
             }
 
-            var data = Utils.GetObjectDataBySha1(args[1]);
+            var data = Sha1Utils.GetObjectDataBySha1(args[1]);
             var nullIndex = Array.IndexOf(data, (byte)0);
             var content = Encoding.UTF8.GetString(data[(nullIndex + 1)..]);
 

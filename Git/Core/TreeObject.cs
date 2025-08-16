@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using Git.Core;
+using System.Text;
 
 namespace Csharp.Core
 {
@@ -19,7 +20,7 @@ namespace Csharp.Core
             {
                 var modeBytes = Encoding.ASCII.GetBytes(entry.Mode + " ");
                 var nameBytes = Encoding.UTF8.GetBytes(entry.Name);
-                var sha1Bytes = Utils.StringToSha1Bytes(entry.Sha1);
+                var sha1Bytes = Sha1Utils.Sha1StringToBytes(entry.Sha1);
 
                 treeStream.Write(modeBytes, 0, modeBytes.Length);
                 treeStream.Write(nameBytes, 0, nameBytes.Length);
@@ -29,9 +30,9 @@ namespace Csharp.Core
 
             var treeContent = treeStream.ToArray();
             var header = $"tree {treeContent.Length}\0";
-            var fullTree = Utils.CombineBytes(Encoding.UTF8.GetBytes(header), treeContent);
+            var fullTree = Sha1Utils.CombineBytes(Encoding.UTF8.GetBytes(header), treeContent);
 
-            var treeSha1 = Utils.ComputeSha1(fullTree);
+            var treeSha1 = Sha1Utils.CreateSha1FromByteData(fullTree);
             ObjectStore.WriteObject(treeSha1, fullTree);
 
             return treeSha1;

@@ -1,7 +1,6 @@
 ﻿using Csharp.Commands;
-using Csharp.Core;
 using Csharp.Test.Configs;
-using System.Text;
+using Git.Core;
 
 namespace Csharp.Test
 {
@@ -12,7 +11,7 @@ namespace Csharp.Test
         {
             HashObjectTest.HashObject_CreateAndCompressBlobObject();
 
-            var sha1Expected = Utils.GetSha1FromBlob("teste.txt");
+            var sha1Expected = BlobUtils.GetSha1FromBlob("teste.txt");
 
             var Objectcontent = CatFile.Execute(["-p", sha1Expected]);
             var ObjectcontentExpected = File.ReadAllText("teste.txt");

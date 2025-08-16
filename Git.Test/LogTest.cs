@@ -1,7 +1,7 @@
 ﻿using Csharp.Commands;
-using Csharp.Core;
 using Csharp.Test.Configs;
 using Git.Commands;
+using Git.Core;
 using System.Text;
 
 namespace Git.Test
@@ -23,14 +23,14 @@ namespace Git.Test
             File.WriteAllText(fileName2, content2, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
 
             Add.Execute([fileName]);
-            var lines = Utils.GetIndexFileContentLines();
+            var lines = CommitUtils.GetIndexEntries();
             Assert.NotEmpty(lines);
 
             var commitSha1 = Commit.Execute(["-m", "Teste commit 1"]);
             Assert.True(!string.IsNullOrWhiteSpace(commitSha1));
 
             Add.Execute([fileName2]);
-            lines = Utils.GetIndexFileContentLines();
+            lines = CommitUtils.GetIndexEntries();
             Assert.NotEmpty(lines);
 
             var commit2Sha1 = Commit.Execute(["-m", "Teste commit 2"]);

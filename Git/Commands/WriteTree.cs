@@ -1,4 +1,5 @@
 ﻿using Csharp.Core;
+using Git.Core;
 using System.Collections.Generic;
 using System.Text;
 
@@ -24,7 +25,7 @@ namespace Csharp.Commands
                     continue;
                 }
 
-                var (blobSha1, fullBlob) = Utils.WriteBlob(file);
+                var (blobSha1, fullBlob) = BlobUtils.WriteBlob(file);
                 ObjectStore.WriteObject(blobSha1, fullBlob);
 
                 entries.Add(new TreeEntry

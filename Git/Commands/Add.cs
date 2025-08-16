@@ -1,6 +1,5 @@
 ﻿using Csharp.Commands;
-using Csharp.Core;
-using System.Text;
+using Git.Core;
 
 namespace Git.Commands
 {
@@ -68,7 +67,7 @@ namespace Git.Commands
         {
             var sha1 = HashObject.Execute(new string[] { "-w", file });
 
-            var lines = Utils.GetIndexFileContentLines(true);
+            var lines = CommitUtils.GetIndexEntries(true);
 
             var newContentLines = new List<string>();
             var found = false;
@@ -107,7 +106,7 @@ namespace Git.Commands
                 newContentLines.Add($"{sha1} {file}");
             }
 
-            Utils.WriteIndexFile(string.Join('\n', newContentLines) + "\n");
+            CommitUtils.CreateOrUpdateIndex(string.Join('\n', newContentLines) + "\n");
         }
     }
 }

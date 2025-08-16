@@ -1,9 +1,7 @@
-﻿using Csharp.Commands;
-using Csharp.Core;
-using Csharp.Test.Configs;
+﻿using Csharp.Test.Configs;
 using Git.Commands;
+using Git.Core;
 using System.Text;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Git.Test
 {
@@ -18,7 +16,7 @@ namespace Git.Test
 
             Add.Execute([fileName]);
 
-            var lines = Utils.GetIndexFileContentLines();
+            var lines = CommitUtils.GetIndexEntries();
             Assert.NotEmpty(lines); 
 
             var line = lines.FirstOrDefault(line => line.Contains(fileName));
@@ -27,12 +25,12 @@ namespace Git.Test
             var parts = line.Split(" ", 2);
             Assert.NotEmpty(parts);
 
-            var sha1BlobExpected = Utils.GetSha1FromBlob(fileName);
+            var sha1BlobExpected = BlobUtils.GetSha1FromBlob(fileName);
             Assert.Contains(sha1BlobExpected, parts);
 
             var commitSha1 = Commit.Execute(["-m", "commit test"]);
 
-            var commitData = Utils.GetObjectDataBySha1(commitSha1);
+            var commitData = Sha1Utils.GetObjectDataBySha1(commitSha1);
             var nullIndex = Array.IndexOf(commitData, (byte)0);
             var commitContent = Encoding.UTF8.GetString(commitData[(nullIndex + 1)..]);
 
@@ -46,7 +44,7 @@ namespace Git.Test
 
             var commitTreeSha1 = commitTreeParts[1];
 
-            var treeData = Utils.GetObjectDataBySha1(commitTreeSha1);
+            var treeData = Sha1Utils.GetObjectDataBySha1(commitTreeSha1);
             var nullIndexHeader = Array.IndexOf(treeData, (byte)0);
             var treeContent = treeData.Skip(nullIndexHeader + 1).ToArray();
 
@@ -55,7 +53,7 @@ namespace Git.Test
 
             var blobSha1 = treeContent.Skip(nameEnd + 1).Take(20).ToArray();
 
-            Assert.Equal(sha1BlobExpected, Utils.Sha1BytesToString(blobSha1));
+            Assert.Equal(sha1BlobExpected, Sha1Utils.Sha1BytesToString(blobSha1));
         }
     }
 }
