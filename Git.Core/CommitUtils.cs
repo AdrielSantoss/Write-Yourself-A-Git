@@ -1,4 +1,6 @@
-﻿namespace Git.Core
+﻿using System.Text;
+
+namespace Git.Core
 {
     public class CommitUtils
     {
@@ -12,6 +14,20 @@
             var parts = refs.Split(" ", 2);
 
             return File.ReadAllText(Path.Combine(gitAdrDir, parts[1]));
+        }
+
+        public static string GetCommitTreeSha1(string commitSha1)
+        {
+            var data = Sha1Utils.GetObjectDataBySha1(commitSha1);
+            var nullIdx = Array.IndexOf(data, (byte)0);
+            var content = data[(nullIdx + 1)..];
+
+            var text = Encoding.UTF8.GetString(content);
+            var lineTree = text.Split('\n').First(l => l.StartsWith("tree "));
+                
+            var parts = lineTree.Split(' ', 2);
+
+            return parts[1];
         }
 
         public static string[] GetIndexEntries(bool createIndexFile = false)

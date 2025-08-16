@@ -1,7 +1,4 @@
-﻿
-using Csharp.Core;
-using Git.Core;
-using System.Text;
+﻿using Git.Core;
 
 namespace Git.Commands
 {
@@ -15,32 +12,17 @@ namespace Git.Commands
                 return string.Empty;
             }
 
-            var data = Sha1Utils.GetObjectDataBySha1(args[1]);
-            var nullIndexHeader = Array.IndexOf(data, (byte)0);
-            var content = data.Skip(nullIndexHeader + 1).ToArray();
+            var entries = TreeUtils.GetTreeEntriesFromSha1(args[1]);
 
-            string result = "";
+            var result = string.Empty;
 
-            int offset = 0;
-            while (offset < content.Length)
+            foreach (var entry in entries)
             {
-                int modeEnd = Array.IndexOf(content, (byte)0x20, offset);
-                var mode = Encoding.UTF8.GetString(content, offset, modeEnd - offset);
+                var type = entry.Mode == "040000" ? "tree" : "blob";
+                var lineData = $"{entry.Mode} {type} {entry.Sha1} {entry.Name}";
 
-                int nameEnd = Array.IndexOf(content, (byte)0, modeEnd + 1);
-                var name = Encoding.UTF8.GetString(content, modeEnd + 1, nameEnd - (modeEnd + 1));
-
-                var sha1Bytes = content.Skip(nameEnd + 1).Take(20).ToArray();
-                var sha1 = Sha1Utils.Sha1BytesToString(sha1Bytes);
-
-                var type = mode == "040000" ? "tree" : "blob";
-
-                var lineData = ($"{mode} {type} {sha1} {name}");
-                
                 Console.WriteLine(lineData);
-
-                result += lineData;
-                offset = nameEnd + 1 + 20;
+                result += lineData + "\n";
             }
 
             return result;

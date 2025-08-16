@@ -13,89 +13,176 @@ namespace Git.Commands
                 return string.Empty;
             }
 
-            var indexLines = CommitUtils.GetIndexEntries();
-            if (!indexLines.Any())
+            var indexEntries = CommitUtils.GetIndexEntries();
+
+            if (indexEntries == null || indexEntries.Length == 0)
             {
                 throw new Exception("Nenhum arquivo na staging area.");
             }
 
-            var trees = new Dictionary<string, List<TreeEntry>>();
+            var parentCommit = CommitUtils.GetLastCommitSha1FromHead();
+                    
+            var rootSha1 = BuildCommitTree(indexEntries, parentCommit);
 
-            foreach (var line in indexLines)
+            var commitSha1 = CommitObject.WriteCommit(rootSha1, args[1]);
+
+            UpdateHead(commitSha1);
+
+            Console.WriteLine(commitSha1);
+
+            CommitUtils.CreateOrUpdateIndex(string.Empty);
+
+            return commitSha1;
+        }
+
+        private static string BuildCommitTree(string[] index, string? parentCommit)
+        {
+            var indexMap = StringIndexEntriesToDictonary(index);
+            var baseFiles = new Dictionary<string, (string Mode, string Sha1)>();
+
+            if (!string.IsNullOrEmpty(parentCommit))
             {
-                var parts = line.Split(' ', 2);
-                var sha1 = parts[0];
-                var fullPath = Path.GetRelativePath(Directory.GetCurrentDirectory(), parts[1]);
-                var pathParts = fullPath.Split(Path.DirectorySeparatorChar);
-
-                var fileName = pathParts.Last();
-                var dirs = pathParts.Take(pathParts.Length - 1).ToArray();
-                var key = string.Join(Path.DirectorySeparatorChar, dirs);
-
-                if (!trees.ContainsKey(key))
-                {
-                    trees[key] = new List<TreeEntry>();
-                }
-
-                trees[key].Add(new TreeEntry
-                {
-                    Mode = "100644",
-                    Name = fileName,
-                    Sha1 = sha1
-                });
+                var parentTreeSha1 = CommitUtils.GetCommitTreeSha1(parentCommit);
+                RecursiveExpandTree("", parentTreeSha1, baseFiles);
             }
 
-            string BuildTree(string path)
+            foreach (var keyValue in indexMap)
             {
-                if (!trees.ContainsKey(path))
-                {
-                    trees[path] = new List<TreeEntry>();
-                }
+                var relPath = keyValue.Key;
+                var blobSha1 = keyValue.Value;
+                baseFiles[relPath] = ("100644", blobSha1);
+            }
 
-                var entries = new List<TreeEntry>(trees[path]);
-
-                var subdirs = trees.Keys
-                    .ToList()
-                    .Where(k => k != path && k.StartsWith(path == "" ? "" : path + Path.DirectorySeparatorChar))
-                    .Select(k =>
+            string WriteDir(string prefix)
+            {
+                var childNames = baseFiles.Keys
+                    .Where(p => IsUnderPrefix(p, prefix))
+                    .Select(p =>
                     {
-                        var remainder = path == "" ? k : k.Substring(path.Length + 1);
-                        return remainder.Split(Path.DirectorySeparatorChar).First();
+                        var remainder = GetRemainder(p, prefix);
+                        return remainder.Split(Path.DirectorySeparatorChar)[0];
                     })
-                    .Distinct();
+                    .Distinct()
+                    .OrderBy(n => n)
+                    .ToList();
 
-                foreach (var subdir in subdirs)
+                var entries = new List<TreeEntry>();
+
+                foreach (var name in childNames)
                 {
-                    var subPath = path == "" ? subdir : Path.Combine(path, subdir);
-                    var sha1 = BuildTree(subPath);
+                    var fullPath = CombinePrefix(prefix, name);
 
-                    entries.Add(new TreeEntry
+                    if (baseFiles.TryGetValue(fullPath, out var fileInfo))
                     {
-                        Mode = "040000",
-                        Name = subdir,
-                        Sha1 = sha1
-                    });
+                        entries.Add(new TreeEntry
+                        {
+                            Mode = fileInfo.Mode,
+                            Name = name,
+                            Sha1 = fileInfo.Sha1
+                        });
+                    }
+                    else
+                    {
+                        var subTreeSha1 = WriteDir(fullPath);
+                        entries.Add(new TreeEntry
+                        {
+                            Mode = "040000",
+                            Name = name,
+                            Sha1 = subTreeSha1
+                        });
+                    }
                 }
 
                 return TreeObject.WriteTree(entries);
             }
 
-            var rootSha1 = BuildTree("");
+            return WriteDir("");
+        }
 
-            var commitSha1 = CommitObject.WriteCommit(rootSha1, args[1]);
-            UpdateHead(commitSha1);
+        private static void RecursiveExpandTree(string prefix, string treeSha1, Dictionary<string, (string Mode, string Sha1)> dict)
+        {
+            var entries = TreeUtils.GetTreeEntriesFromSha1(treeSha1);
 
-            Console.WriteLine(commitSha1);
-            CommitUtils.CreateOrUpdateIndex(string.Empty);
+            foreach (var entry in entries)
+            {
+                var fullPath = CombinePrefix(prefix, entry.Name);
 
-            return commitSha1;
+                if (entry.Mode == "040000")
+                {
+                    RecursiveExpandTree(fullPath, entry.Sha1, dict);
+                }
+                else
+                {
+                    dict[fullPath] = (entry.Mode, entry.Sha1);
+                }
+            }
+        }
+
+        private static bool IsUnderPrefix(string path, string prefix)
+        {
+            if (string.IsNullOrEmpty(prefix))
+            {
+                return true;
+            }
+
+            if (path.Length < prefix.Length)
+            {
+                return false;
+            }
+
+            if (!path.StartsWith(prefix)) 
+            { 
+                return false; 
+            }
+
+            if (path.Length == prefix.Length) 
+            { 
+                return false; 
+            }
+
+            return path[prefix.Length] == Path.DirectorySeparatorChar;
+        }
+
+        private static string GetRemainder(string path, string prefix)
+        {
+            if (string.IsNullOrEmpty(prefix))
+            {
+                return path;
+            }
+
+            return path.Substring(prefix.Length + 1);
+        }
+
+        private static string CombinePrefix(string prefix, string name)
+        {
+            return string.IsNullOrEmpty(prefix) ? name : Path.Combine(prefix, name);
+        }
+
+        private static Dictionary<string, string> StringIndexEntriesToDictonary(string[] entries)
+        {
+            var indexMap = new Dictionary<string, string>();
+
+            foreach (var line in entries)
+            {
+                var parts = line.Split(' ', 2);
+
+                var sha1 = parts[0];
+                var path = parts[1];
+
+                var relPath = Path.GetRelativePath(Directory.GetCurrentDirectory(), path);
+
+                relPath = relPath.Replace('/', Path.DirectorySeparatorChar);
+
+                indexMap[relPath] = sha1;
+            }
+
+            return indexMap;
         }
 
         private static void UpdateHead(string commitSha1)
         {
             var refs = BranchUtils.GetHead();
             var parts = refs.Split(" ", 2);
-
             BranchUtils.CreateOrUpdateBranch(parts[1], commitSha1);
         }
     }
