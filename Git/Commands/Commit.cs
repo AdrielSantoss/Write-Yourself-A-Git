@@ -22,12 +22,7 @@ namespace Git.Commands
             }
 
             var rootSha1 = string.Empty;
-            var currentEntry = new TreeEntry()
-            {
-                Mode = string.Empty,
-                Name = string.Empty,
-                Sha1 = string.Empty
-            };
+            var rootEntries = new List<TreeEntry>(){};
 
             foreach (var line in lines)
             {
@@ -41,11 +36,10 @@ namespace Git.Commands
 
                 var currentSha1 = fileSha1;
                 var currentName = file;
-                var currentMode = "100644";
 
-                currentEntry = new TreeEntry() 
+                var currentEntry = new TreeEntry()
                 {
-                    Mode = currentMode,
+                    Mode = "100644",
                     Name = currentName,
                     Sha1 = currentSha1
                 };
@@ -65,10 +59,16 @@ namespace Git.Commands
                             Sha1 = currentSha1
                         };
                     }
+
+                    rootEntries.Add(currentEntry);
+                }
+                else
+                {
+                    rootEntries.Add(currentEntry);
                 }
             }
 
-            rootSha1 = TreeObject.WriteTree(new List<TreeEntry>() { currentEntry });
+            rootSha1 = TreeObject.WriteTree(rootEntries);
 
             var commitSha1 = CommitObject.WriteCommit(rootSha1, args[1]);
 
