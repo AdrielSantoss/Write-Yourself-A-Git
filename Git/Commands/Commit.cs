@@ -1,5 +1,10 @@
 ﻿using Csharp.Core;
 using Git.Core;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Xml.XPath;
+using static System.Net.WebRequestMethods;
 
 namespace Git.Commands
 {
@@ -20,49 +25,112 @@ namespace Git.Commands
                 throw new Exception("Nenhum arquivo na staging area.");
             }
 
-            var rootSha1 = string.Empty;
-            var rootEntries = new List<TreeEntry>(){};
+            var dirEntries = new Dictionary<string, List<TreeEntry>>();
 
             foreach (var line in lines)
             {
                 var parts = line.Split(' ', 2);
-
                 var fileSha1 = parts[0];
-                var path = parts[1];
-                var pathItems = Path.GetRelativePath(Directory.GetCurrentDirectory(), path).Split(@"\");
+                var fullPath = Path.GetRelativePath(Directory.GetCurrentDirectory(), parts[1]);
 
-                var file = pathItems.Last();
+                var pathArr = fullPath.Split(@"\").ToArray();
 
-                var currentSha1 = fileSha1;
-                var currentName = file;
+                var file = pathArr.Reverse().ToArray()[0];
 
-                var currentEntry = new TreeEntry()
+                var directories = pathArr.Take(pathArr.Length - 1).ToArray();
+                var entryKey = file;
+
+                if (directories.Length > 0)
                 {
-                    Mode = "100644",
-                    Name = currentName,
-                    Sha1 = currentSha1
-                };
-               
-                pathItems = pathItems.Take(pathItems.Length - 1).ToArray();
-
-                foreach (var item in pathItems.Reverse())
-                {
-                    currentSha1 = TreeObject.WriteTree(new List<TreeEntry>() { currentEntry });
-
-                    currentEntry = new TreeEntry()
-                    {
-                        Mode = "040000",
-                        Name = item,
-                        Sha1 = currentSha1
-                    };
+                    entryKey = string.Join(@"\", directories);
                 }
 
-                rootEntries.Add(currentEntry);
+                if (!dirEntries.ContainsKey(entryKey))
+                {
+                    dirEntries[entryKey] = new List<TreeEntry>();
+                }
+
+                dirEntries[entryKey].Add(new TreeEntry()
+                {
+                    Mode = "100644",
+                    Name = file,
+                    Sha1 = fileSha1
+                });
             }
 
-            rootSha1 = TreeObject.WriteTree(rootEntries);
+            var mainTries = new Dictionary<string, string>();
+            foreach (var key in dirEntries.Keys)
+            {
+                mainTries[key] = TreeObject.WriteTree(dirEntries[key]);
+            }
+
+            string BuildTree(string dirTree)
+            {
+                var rootTreeEntries = new List<TreeEntry>() { };
+
+                foreach (var key in mainTries.Keys) //a/b/c
+                {
+                    var subdirs = key.Split(@"\").Reverse().ToArray(); //c, b
+                    subdirs = subdirs.Take(subdirs.Length - 1).ToArray();
+                    var currentSubDirSha1 = mainTries[key]; //abc123
+                    var currentSubdir = key; //a/b/c/maurinho.txt
+
+                    if (subdirs.Length > 1)
+                    {
+                        foreach (var subdir in subdirs) // c
+                        {
+                            currentSubdir = subdir; //c
+                            currentSubDirSha1 = TreeObject.WriteTree(
+                                new List<TreeEntry>()
+                                {
+                                new TreeEntry()
+                                {
+                                    Mode = "040000",
+                                    Name = currentSubdir, //c 
+                                    Sha1 = currentSubDirSha1 //abc123
+                                }
+                                }
+                            );
+                        }
+
+                        rootTreeEntries.Add(new TreeEntry()
+                        {
+                            Mode = "040000",
+                            Name = currentSubdir,
+                            Sha1 = currentSubDirSha1
+                        });
+                    }
+                    else
+                    {
+                        rootTreeEntries.Add(new TreeEntry()
+                        {
+                            Mode = "100644",
+                            Name = currentSubdir, 
+                            Sha1 = currentSubDirSha1 
+                        });
+                    }
+                }
+
+                return TreeObject.WriteTree(rootTreeEntries);
+            }
+
+            var rootSha1 = BuildTree("");
 
             var commitSha1 = CommitObject.WriteCommit(rootSha1, args[1]);
+
+            //var commitData = Sha1Utils.GetObjectDataBySha1(commitSha1);
+            //var nullIndex = Array.IndexOf(commitData, (byte)0);
+            //var commitContent = Encoding.UTF8.GetString(commitData[(nullIndex + 1)..]);
+
+            //var commitLines = commitContent.Split('\n');
+
+            //var commitTreeLine = commitLines.Where(commit => commit.StartsWith("tree ")).FirstOrDefault();
+
+            //var commitTreeParts = commitTreeLine.Split(" ", 2);
+   
+            //var commitTreeSha1 = commitTreeParts[1];
+
+   //         LsTree.Execute(["-p", commitTreeSha1]);
 
             UpdateHead(commitSha1);
 
