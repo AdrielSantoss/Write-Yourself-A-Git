@@ -1,9 +1,6 @@
 ﻿
-using Csharp.Commands;
 using Csharp.Core;
 using Git.Core;
-using System;
-using System.Text;
 
 namespace Git.Commands
 {
@@ -24,66 +21,62 @@ namespace Git.Commands
                 throw new Exception("Nenhum arquivo na staging area.");
             }
 
-            var rootSha1 = "";
+            var rootSha1 = string.Empty;
+            var currentEntry = new TreeEntry()
+            {
+                Mode = string.Empty,
+                Name = string.Empty,
+                Sha1 = string.Empty
+            };
 
             foreach (var line in lines)
             {
                 var parts = line.Split(' ', 2);
 
-                if (parts.Length != 2)
-                    continue;
-
                 var fileSha1 = parts[0];
                 var path = parts[1];
+                var pathItems = Path.GetRelativePath(Directory.GetCurrentDirectory(), path).Split(@"\");
 
-                var pathItems = path.TrimStart('/').Split('/').ToArray();
                 var file = pathItems.Last();
 
                 var currentSha1 = fileSha1;
                 var currentName = file;
                 var currentMode = "100644";
 
+                currentEntry = new TreeEntry() 
+                {
+                    Mode = currentMode,
+                    Name = currentName,
+                    Sha1 = currentSha1
+                };
+               
                 if (pathItems.Length > 1)
                 {
                     pathItems = pathItems.Take(pathItems.Length - 1).ToArray();
 
                     foreach (var item in pathItems.Reverse())
                     {
-                        currentSha1 = TreeObject.WriteTree(
-                        new List<TreeEntry>() {
-                        new TreeEntry()
-                            {
-                                Mode = currentMode,
-                                Name = currentName,
-                                Sha1 = currentSha1
-                            }
-                            }
-                        );
+                        currentSha1 = TreeObject.WriteTree(new List<TreeEntry>() { currentEntry });
 
-                        currentName = item;
-                        currentMode = "040000";
+                        currentEntry = new TreeEntry()
+                        {
+                            Mode = "040000",
+                            Name = item,
+                            Sha1 = currentSha1
+                        };
                     }
                 }
-
-                rootSha1 = TreeObject.WriteTree(
-                    new List<TreeEntry>() {
-                        new TreeEntry()
-                        {
-                            Mode = currentMode,
-                            Name = currentName,
-                            Sha1 = currentSha1
-                        }
-                    }
-                );
             }
+
+            rootSha1 = TreeObject.WriteTree(new List<TreeEntry>() { currentEntry });
 
             var commitSha1 = CommitObject.WriteCommit(rootSha1, args[1]);
 
             UpdateHead(commitSha1);
 
-            Utils.WriteIndexFile(string.Empty);
-
             Console.WriteLine(commitSha1);
+
+            Utils.WriteIndexFile(string.Empty);
 
             return commitSha1;
         }
