@@ -44,28 +44,21 @@ namespace Git.Commands
                     Sha1 = currentSha1
                 };
                
-                if (pathItems.Length > 1)
-                {
-                    pathItems = pathItems.Take(pathItems.Length - 1).ToArray();
+                pathItems = pathItems.Take(pathItems.Length - 1).ToArray();
 
-                    foreach (var item in pathItems.Reverse())
+                foreach (var item in pathItems.Reverse())
+                {
+                    currentSha1 = TreeObject.WriteTree(new List<TreeEntry>() { currentEntry });
+
+                    currentEntry = new TreeEntry()
                     {
-                        currentSha1 = TreeObject.WriteTree(new List<TreeEntry>() { currentEntry });
-
-                        currentEntry = new TreeEntry()
-                        {
-                            Mode = "040000",
-                            Name = item,
-                            Sha1 = currentSha1
-                        };
-                    }
-
-                    rootEntries.Add(currentEntry);
+                        Mode = "040000",
+                        Name = item,
+                        Sha1 = currentSha1
+                    };
                 }
-                else
-                {
-                    rootEntries.Add(currentEntry);
-                }
+
+                rootEntries.Add(currentEntry);
             }
 
             rootSha1 = TreeObject.WriteTree(rootEntries);
