@@ -115,7 +115,7 @@ namespace Git.Commands
 
             if (!staged.Any() && !modified.Any() && !deleted.Any() && !untracked.Any())
             {
-                Console.WriteLine("Nada para commitar, working tree limpa.");
+                Console.WriteLine("nothing to commit, working tree clean");
             }
         }
 
