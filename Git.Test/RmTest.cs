@@ -1,5 +1,4 @@
-﻿using Csharp.Core;
-using Csharp.Test.Configs;
+﻿using Csharp.Test.Configs;
 using Git.Commands;
 using Git.Core;
 using System.Text;
