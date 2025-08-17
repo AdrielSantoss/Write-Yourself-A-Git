@@ -18,7 +18,7 @@
             Directory.CreateDirectory(Path.Combine(gitDir, "refs", "heads"));
 
             File.WriteAllText(Path.Combine(gitDir, "refs", "heads", "master"), string.Empty);
-            File.WriteAllText(Path.Combine(gitDir, "HEAD"), "ref: refs/heads/master");
+            File.WriteAllText(Path.Combine(gitDir, "HEAD"), $"ref: refs{Path.DirectorySeparatorChar}heads{Path.DirectorySeparatorChar}master");
 
             Console.WriteLine($"Repositório inicializado em {gitDir}");
         }
