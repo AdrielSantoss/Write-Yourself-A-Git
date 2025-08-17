@@ -6,13 +6,13 @@ using System.Text;
 
 namespace Git.Test
 {
-    public class ResetTest : IClassFixture<InitFixture>
+    public class RmTest : IClassFixture<InitFixture>
     {
         [Fact]
         public void Reset_FindBlobAndRemoveIndexLine()
         {
-            var fileName = "testeReset.txt";
-            var content = "test reset";
+            var fileName = "testeRm.txt";
+            var content = "test rm";
             File.WriteAllText(fileName, content, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
 
             var sha1 = BlobUtils.GetSha1FromBlob(fileName);
@@ -21,7 +21,7 @@ namespace Git.Test
             var lines = CommitUtils.GetIndexEntries();
             Assert.NotEmpty(lines);
 
-            Reset.Execute([fileName]);
+            Rm.Execute([fileName]);
             lines = CommitUtils.GetIndexEntries();
             Assert.Empty(lines);
         }

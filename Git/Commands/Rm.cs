@@ -1,9 +1,8 @@
-﻿using Csharp.Commands;
-using Git.Core;
+﻿using Git.Core;
 
 namespace Git.Commands
 {
-    public class Reset
+    public class Rm
     {
         public static void Execute(string[] args)
         {
