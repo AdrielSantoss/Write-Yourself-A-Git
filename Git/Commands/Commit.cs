@@ -21,6 +21,38 @@ namespace Git.Commands
             }
 
             var parentCommit = CommitUtils.GetLastCommitSha1FromHead();
+
+            if (!string.IsNullOrEmpty(parentCommit))
+            {
+                var headTreeSha1 = CommitUtils.GetCommitTreeSha1(parentCommit);
+                var headEntries = TreeUtils
+                    .GetTreeEntriesFromSha1(headTreeSha1)
+                    .ToDictionary(e => e.Name, e => e.Sha1);
+
+                var hasChanges = false;
+
+                if (indexEntries.Count != headEntries.Count)
+                {
+                    hasChanges = true;
+                }
+                else
+                {
+                    foreach (var kv in indexEntries)
+                    {
+                        if (!headEntries.TryGetValue(kv.Key, out var sha1) || sha1 != kv.Value)
+                        {
+                            hasChanges = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!hasChanges)
+                {
+                    Console.WriteLine("nothing to commit, working tree clean");
+                    return string.Empty;
+                }
+            }
                     
             var rootSha1 = BuildCommitTree(indexEntries, parentCommit);
 
@@ -29,8 +61,6 @@ namespace Git.Commands
             UpdateHead(commitSha1);
 
             Console.WriteLine(commitSha1);
-
-            CommitUtils.CreateOrUpdateIndex(string.Empty);
 
             return commitSha1;
         }
