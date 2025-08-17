@@ -8,6 +8,13 @@ namespace Csharp.Commands
         public static List<string> Execute()
         {
             var lastCommitSha1 = CommitUtils.GetLastCommitSha1FromHead();
+
+            if (string.IsNullOrWhiteSpace(lastCommitSha1))
+            {
+                Console.WriteLine("Nenhum commit registrado.");
+                return new List<string>();
+            }
+
             return ReadCommitsRecursive(lastCommitSha1, true, new List<string>());
         }
 
