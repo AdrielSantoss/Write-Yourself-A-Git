@@ -30,7 +30,7 @@ namespace Git.Core
             return parts[1];
         }
 
-        public static string[] GetIndexEntries(bool createIndexFile = false)
+        public static Dictionary<string, string> GetIndexEntries(bool createIndexFile = false)
         {
             var gitDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
             var pathIndex = Path.Combine(gitDir, "index");
@@ -42,7 +42,7 @@ namespace Git.Core
                     File.WriteAllText(pathIndex, string.Empty);
                 }
 
-                return Array.Empty<string>();
+                return new Dictionary<string, string>();
             }
 
             var content = File.ReadAllText(pathIndex);
@@ -54,10 +54,28 @@ namespace Git.Core
                     File.WriteAllText(pathIndex, content);
                 }
 
-                return Array.Empty<string>();
+                return new Dictionary<string, string>();
             }
 
-            return content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            var entries = content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+
+            var indexMap = new Dictionary<string, string>();
+
+            foreach (var line in entries)
+            {
+                var parts = line.Split(' ', 2);
+
+                var sha1 = parts[0];
+                var path = parts[1];
+
+                var relPath = Path.GetRelativePath(Directory.GetCurrentDirectory(), path);
+
+                relPath = relPath.Replace('/', Path.DirectorySeparatorChar);
+
+                indexMap[relPath] = sha1;
+            }
+
+            return indexMap;
         }
 
         public static void CreateOrUpdateIndex(string contenet)

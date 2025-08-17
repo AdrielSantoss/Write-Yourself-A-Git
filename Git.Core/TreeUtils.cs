@@ -39,5 +39,10 @@ namespace Git.Core
 
             return entries;
         }
+
+        public static string CombinePrefix(string prefix, string name)
+        {
+            return string.IsNullOrEmpty(prefix) ? name : Path.Combine(prefix, name);
+        }
     }
 }

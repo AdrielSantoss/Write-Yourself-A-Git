@@ -13,9 +13,9 @@ namespace Git.Commands
                 return string.Empty;
             }
 
-            var indexEntries = CommitUtils.GetIndexEntries();
+            var indexEntries = CommitUtils.GetIndexEntries(false);
 
-            if (indexEntries == null || indexEntries.Length == 0)
+            if (indexEntries == null || indexEntries.Keys.Count == 0)
             {
                 throw new Exception("Nenhum arquivo na staging area.");
             }
@@ -35,9 +35,8 @@ namespace Git.Commands
             return commitSha1;
         }
 
-        private static string BuildCommitTree(string[] index, string? parentCommit)
+        private static string BuildCommitTree(Dictionary<string, string> indexMap, string? parentCommit)
         {
-            var indexMap = StringIndexEntriesToDictonary(index);
             var baseFiles = new Dictionary<string, (string Mode, string Sha1)>();
 
             if (!string.IsNullOrEmpty(parentCommit))
@@ -70,7 +69,7 @@ namespace Git.Commands
 
                 foreach (var name in childNames)
                 {
-                    var fullPath = CombinePrefix(prefix, name);
+                    var fullPath = TreeUtils.CombinePrefix(prefix, name);
 
                     if (baseFiles.TryGetValue(fullPath, out var fileInfo))
                     {
@@ -105,7 +104,7 @@ namespace Git.Commands
 
             foreach (var entry in entries)
             {
-                var fullPath = CombinePrefix(prefix, entry.Name);
+                var fullPath = TreeUtils.CombinePrefix(prefix, entry.Name);
 
                 if (entry.Mode == "040000")
                 {
@@ -151,32 +150,6 @@ namespace Git.Commands
             }
 
             return path.Substring(prefix.Length + 1);
-        }
-
-        private static string CombinePrefix(string prefix, string name)
-        {
-            return string.IsNullOrEmpty(prefix) ? name : Path.Combine(prefix, name);
-        }
-
-        private static Dictionary<string, string> StringIndexEntriesToDictonary(string[] entries)
-        {
-            var indexMap = new Dictionary<string, string>();
-
-            foreach (var line in entries)
-            {
-                var parts = line.Split(' ', 2);
-
-                var sha1 = parts[0];
-                var path = parts[1];
-
-                var relPath = Path.GetRelativePath(Directory.GetCurrentDirectory(), path);
-
-                relPath = relPath.Replace('/', Path.DirectorySeparatorChar);
-
-                indexMap[relPath] = sha1;
-            }
-
-            return indexMap;
         }
 
         private static void UpdateHead(string commitSha1)

@@ -72,15 +72,9 @@ namespace Git.Commands
             var newContentLines = new List<string>();
             var found = false;
 
-            foreach (var line in lines)
+            foreach (var fileName in lines.Keys)
             {
-                var parts = line.Split(' ', 2);
-
-                if (parts.Length != 2)
-                    continue;
-
-                var fileSha1 = parts[0];
-                var fileName = parts[1];
+                var fileSha1 = lines[fileName];
 
                 if (fileName == file)
                 {
@@ -97,7 +91,7 @@ namespace Git.Commands
                 }
                 else
                 {
-                    newContentLines.Add(line);
+                    newContentLines.Add($"{fileSha1} {fileName}");
                 }
             }
 
