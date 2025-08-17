@@ -8,7 +8,7 @@ namespace Git.Commands
         {
             if (args.Length < 1)
             {
-                Console.WriteLine("Uso: dotnet run -- reset <arquivo>");
+                Console.WriteLine("Uso: dotnet run -- rm <arquivo>");
                 return;
             }
 
