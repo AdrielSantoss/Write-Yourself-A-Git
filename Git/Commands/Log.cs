@@ -1,5 +1,4 @@
-﻿using Csharp.Core;
-using Git.Core;
+﻿using Git.Core;
 using System.Text;
 
 namespace Csharp.Commands
@@ -65,8 +64,11 @@ namespace Csharp.Commands
                 }
             }
 
+            var headFileContent = BranchUtils.GetHead();
+            var branch = headFileContent.Replace(@$"ref: refs{Path.DirectorySeparatorChar}heads{Path.DirectorySeparatorChar}", string.Empty);
+
             var output = $@"
-commit {commitSha1}{(isHead ? " (HEAD -> master)" : string.Empty)}
+commit {commitSha1}{(isHead ? $" (HEAD -> {branch})" : string.Empty)}
 Author: {authorNameEmail}
 Date: {dateString}
 
