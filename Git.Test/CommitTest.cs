@@ -16,17 +16,14 @@ namespace Git.Test
 
             Add.Execute([fileName]);
 
-            var lines = CommitUtils.GetIndexEntries();
-            Assert.NotEmpty(lines); 
+            var indexEntries = CommitUtils.GetIndexEntries();
+            Assert.NotEmpty(indexEntries); 
 
-            var line = lines.FirstOrDefault(line => line.Contains(fileName));
-            Assert.NotNull(line);
-
-            var parts = line.Split(" ", 2);
-            Assert.NotEmpty(parts);
+            var indexEntry = indexEntries[fileName];
+            Assert.NotNull(indexEntry);
 
             var sha1BlobExpected = BlobUtils.GetSha1FromBlob(fileName);
-            Assert.Contains(sha1BlobExpected, parts);
+            Assert.Contains(sha1BlobExpected, indexEntries.Values);
 
             var commitSha1 = Commit.Execute(["-m", "commit test"]);
 

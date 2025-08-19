@@ -17,18 +17,11 @@ namespace Git.Test
 
             Add.Execute([fileName]);
 
-            var lines = CommitUtils.GetIndexEntries();
-            var parts = new List<string>();
+            var indexEntries = CommitUtils.GetIndexEntries();
 
-            foreach (var line in lines)
-            {
-                parts.AddRange(line.Split(" ", 2));
-            }
-
-            Assert.NotEmpty(lines);
-            Assert.NotEmpty(parts);
-            Assert.Contains(fileName, parts);
-            Assert.Contains(sha1, parts);
+            Assert.NotEmpty(indexEntries);
+            Assert.Contains(fileName, indexEntries.Keys);
+            Assert.Contains(sha1, indexEntries.Values);
         }
     }
 }
