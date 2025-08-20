@@ -1,0 +1,193 @@
+﻿using Git.Core;
+using System.Text;
+
+namespace Git.Commands
+{
+    public class Merge
+    {
+        public static void Execute(string[] args)
+        {
+            var commitHead = CommitUtils.GetLastCommitSha1FromHead();
+            var branchHead = BranchUtils.GetHead();
+
+            var branchAlvo = args[0];
+            var commitAlvo = BranchUtils.GetCommitHeadFromBranch(branchAlvo);
+
+            var headCommits = BranchUtils.GetAllCommitsFromBranch(branchHead.Replace(@$"ref: refs{Path.DirectorySeparatorChar}heads{Path.DirectorySeparatorChar}", string.Empty));
+            var branchAlvoCommits = BranchUtils.GetAllCommitsFromBranch(branchAlvo);
+
+            var commitAncestral = branchAlvoCommits!.Intersect(headCommits!).First();
+
+            var ancestralTreeSha1 = CommitUtils.GetCommitTreeSha1(commitAncestral);
+            var ancestralEntries = new Dictionary<string, (string Mode, string Sha1)>();
+
+            RecursiveReadTree(string.Empty, ancestralTreeSha1, ancestralEntries);
+
+            var headTreeSha1 = CommitUtils.GetCommitTreeSha1(commitHead);
+            var headEntries = new Dictionary<string, (string Mode, string Sha1)>();
+
+            RecursiveReadTree(string.Empty, headTreeSha1, headEntries);
+
+            var alvoTreeSha1 = CommitUtils.GetCommitTreeSha1(commitAlvo!);
+            var alvoEntries = new Dictionary<string, (string Mode, string Sha1)>();
+
+            RecursiveReadTree(string.Empty, alvoTreeSha1, alvoEntries);
+
+            var allFiles = ancestralEntries.Keys
+                .Union(headEntries.Keys)
+                .Union(alvoEntries.Keys);
+
+            foreach (var file in allFiles)
+            {
+                var headSha1 = headEntries.ContainsKey(file) ? headEntries[file].Sha1 : string.Empty;
+                var alvoSha1 = alvoEntries.ContainsKey(file) ? alvoEntries[file].Sha1 : string.Empty;
+                var ancestralSha1 = ancestralEntries.ContainsKey(file) ? ancestralEntries[file].Sha1 : string.Empty;
+
+                if (!string.IsNullOrWhiteSpace(headSha1) &&
+                    !string.IsNullOrWhiteSpace(alvoSha1) &&
+                    headSha1 == alvoSha1)
+                {
+                    continue;
+                }
+
+                if ((headSha1 == ancestralSha1) && (alvoSha1 != ancestralSha1))
+                {
+                    AddOrUpdateIndexFile(file, alvoSha1);
+                    WriteFileFromSha1(Path.Combine(Directory.GetCurrentDirectory(), file), alvoSha1);
+
+                    continue;
+                }
+
+                if ((alvoSha1 == ancestralSha1) && (headSha1 != ancestralSha1))
+                {
+                    continue;
+                }
+
+                if (!string.IsNullOrWhiteSpace(ancestralSha1) &&
+                    (headSha1 != ancestralSha1) &&
+                    (alvoSha1 != ancestralSha1) &&
+                    (headSha1 != alvoSha1))
+                {
+                    Console.WriteLine($"Ocorreu um conflito no arquivo: {file}");
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(ancestralSha1))
+                {
+                    if (!string.IsNullOrWhiteSpace(headSha1) && string.IsNullOrWhiteSpace(alvoSha1))
+                    {
+                        continue;
+                    }
+                    else if (!string.IsNullOrWhiteSpace(alvoSha1) && string.IsNullOrWhiteSpace(headSha1))
+                    {
+                        AddOrUpdateIndexFile(file, alvoSha1);
+                        WriteFileFromSha1(Path.Combine(Directory.GetCurrentDirectory(), file), alvoSha1);
+
+                        continue;
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(ancestralSha1))
+                {
+                    if (string.IsNullOrWhiteSpace(headSha1) && string.IsNullOrWhiteSpace(alvoSha1))
+                    {
+                        continue;
+                    }
+                    else if (string.IsNullOrWhiteSpace(headSha1) && alvoSha1 == ancestralSha1)
+                    {
+                        continue;
+                    }
+                    else if (string.IsNullOrWhiteSpace(alvoSha1) && headSha1 == ancestralSha1)
+                    {
+                        RemoveIndexFile(file);
+                        File.Delete(Path.Combine(Directory.GetCurrentDirectory(), file));
+                    }
+                }
+            }
+        }
+
+        private static void RecursiveReadTree(string prefix, string treeSha1, Dictionary<string, (string Mode, string Sha1)> dict)
+        {
+            var entries = TreeUtils.GetTreeEntriesFromSha1(treeSha1);
+
+            foreach (var entry in entries)
+            {
+                var fullPath = TreeUtils.CombinePrefix(prefix, entry.Name);
+
+                if (entry.Mode == "040000")
+                {
+                    RecursiveReadTree(fullPath, entry.Sha1, dict);
+                }
+                else
+                {
+                    dict[fullPath] = (entry.Mode, entry.Sha1);
+                }
+            }
+        }
+        public static void AddOrUpdateIndexFile(string file, string sha1)
+        {
+            var lines = CommitUtils.GetIndexEntries(true);
+
+            var newContentLines = new List<string>();
+            var found = false;
+
+            foreach (var fileName in lines.Keys)
+            {
+                var fileSha1 = lines[fileName];
+
+                if (fileName == file)
+                {
+                    found = true;
+                    if (fileSha1 == sha1)
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        newContentLines.Add($"{sha1} {fileName}");
+                    }
+                }
+                else
+                {
+                    newContentLines.Add($"{fileSha1} {fileName}");
+                }
+            }
+
+            if (!found)
+            {
+                newContentLines.Add($"{sha1} {file}");
+            }
+
+            CommitUtils.CreateOrUpdateIndex(string.Join('\n', newContentLines) + "\n");
+        }
+
+        public static void RemoveIndexFile(string file)
+        {
+            var lines = CommitUtils.GetIndexEntries(true);
+            lines.Remove(file);
+            var newContentLines = new List<string>();
+
+            foreach (var fileName in lines.Keys)
+            {
+                newContentLines.Add($"{lines[fileName]} {fileName}");
+            }
+
+            CommitUtils.CreateOrUpdateIndex(string.Join('\n', newContentLines) + "\n");
+        }
+
+        public static void WriteFileFromSha1(string path, string sha1)
+        {
+            var data = Sha1Utils.GetObjectDataBySha1(sha1);
+            var nullIndex = Array.IndexOf(data, (byte)0);
+            var blob = data[(nullIndex + 1)..];
+
+            var dir = Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
+
+            File.WriteAllBytes(path, blob);
+        }
+    }
+}

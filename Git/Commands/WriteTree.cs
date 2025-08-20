@@ -1,7 +1,5 @@
 ﻿using Csharp.Core;
 using Git.Core;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Csharp.Commands
 {
