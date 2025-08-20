@@ -15,8 +15,7 @@ namespace Git.Commands
 
         public static void ExecuteRecursive(string directory)
         {
-            var worksSpaceFiles = new Dictionary<string, string>();
-            RecursiveReadWorkSapce(Directory.GetCurrentDirectory(), worksSpaceFiles);
+            var worksSpaceFiles =  CommitUtils.RecursiveReadWorkSapce(Directory.GetCurrentDirectory());
 
             var commitHead = CommitUtils.GetLastCommitSha1FromHead();
             var headFiles = new Dictionary<string, (string Mode, string Sha1)>();
@@ -135,30 +134,6 @@ namespace Git.Commands
                 {
                     dict[fullPath] = (entry.Mode, entry.Sha1);
                 }
-            }
-        }
-
-        public static void RecursiveReadWorkSapce(string dir, Dictionary<string, string> dict)
-        {
-            foreach (var entry in Directory.GetFiles(dir))
-            {
-                if (WriteTree.ignoreFiles.Any(ignore => entry.Contains(ignore)))
-                {
-                    continue;
-                }
-
-                var fullPath = Path.GetRelativePath(Directory.GetCurrentDirectory(), entry);
-                dict[fullPath] = BlobUtils.GetSha1FromBlob(entry);
-            }
-
-            foreach (var entry in Directory.GetDirectories(dir))
-            {
-                if (WriteTree.ignoreFiles.Any(ignore => entry.Contains(ignore)))
-                {
-                    continue;
-                }
-
-                RecursiveReadWorkSapce(entry, dict);
             }
         }
 

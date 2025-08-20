@@ -86,5 +86,32 @@ namespace Git.Core
 
             File.WriteAllText(path, contenet);
         }
+
+        public static Dictionary<string, string> RecursiveReadWorkSapce(string dir)
+        {
+            var dict = new Dictionary<string, string>();
+            foreach (var entry in Directory.GetFiles(dir))
+            {
+                if (ignoreFiles.Any(ignore => entry.Contains(ignore)))
+                {
+                    continue;
+                }
+
+                var fullPath = Path.GetRelativePath(Directory.GetCurrentDirectory(), entry);
+                dict[fullPath] = BlobUtils.GetSha1FromBlob(entry);
+            }
+
+            foreach (var entry in Directory.GetDirectories(dir))
+            {
+                if (ignoreFiles.Any(ignore => entry.Contains(ignore)))
+                {
+                    continue;
+                }
+
+                RecursiveReadWorkSapce(entry);
+            }
+
+            return dict;
+        }
     }
 }
