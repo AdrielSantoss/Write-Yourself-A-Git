@@ -1,5 +1,4 @@
 ﻿using Git.Core;
-using System.Text;
 
 namespace Git.Commands
 {
@@ -7,41 +6,50 @@ namespace Git.Commands
     {
         public static void Execute(string[] args)
         {
-            var commitHead = CommitUtils.GetLastCommitSha1FromHead();
-            var branchHead = BranchUtils.GetHead();
+            var targetBranch = args[0];
 
-            var branchAlvo = args[0];
-            var commitAlvo = BranchUtils.GetCommitHeadFromBranch(branchAlvo);
+            var headTargetBranch = BranchUtils.GetCommitHeadFromBranch(targetBranch);
 
-            var headCommits = BranchUtils.GetAllCommitsFromBranch(branchHead.Replace(@$"ref: refs{Path.DirectorySeparatorChar}heads{Path.DirectorySeparatorChar}", string.Empty));
-            var branchAlvoCommits = BranchUtils.GetAllCommitsFromBranch(branchAlvo);
+            if (headTargetBranch == null)
+            {
+                Console.WriteLine($"Não existe um branch com o nome {targetBranch}");
+                return;
+            }
 
-            var commitAncestral = branchAlvoCommits!.Intersect(headCommits!).First();
+            var headCommit = CommitUtils.GetLastCommitSha1FromHead();
+            var headBranch = BranchUtils.GetHead();
 
-            var ancestralTreeSha1 = CommitUtils.GetCommitTreeSha1(commitAncestral);
-            var ancestralEntries = new Dictionary<string, (string Mode, string Sha1)>();
+            var headTarget = BranchUtils.GetCommitHeadFromBranch(targetBranch);
 
-            RecursiveReadTree(string.Empty, ancestralTreeSha1, ancestralEntries);
+            var headCommits = BranchUtils.GetAllCommitsFromBranch(headBranch.Replace(@$"ref: refs{Path.DirectorySeparatorChar}heads{Path.DirectorySeparatorChar}", string.Empty));
+            var targetCommits = BranchUtils.GetAllCommitsFromBranch(targetBranch);
 
-            var headTreeSha1 = CommitUtils.GetCommitTreeSha1(commitHead);
+            var commitBase = targetCommits!.Intersect(headCommits!).First();
+
+            var baseTreeSha1 = CommitUtils.GetCommitTreeSha1(commitBase);
+            var baseEntries = new Dictionary<string, (string Mode, string Sha1)>();
+
+            RecursiveReadTree(string.Empty, baseTreeSha1, baseEntries);
+
+            var headTreeSha1 = CommitUtils.GetCommitTreeSha1(headCommit);
             var headEntries = new Dictionary<string, (string Mode, string Sha1)>();
 
             RecursiveReadTree(string.Empty, headTreeSha1, headEntries);
 
-            var alvoTreeSha1 = CommitUtils.GetCommitTreeSha1(commitAlvo!);
-            var alvoEntries = new Dictionary<string, (string Mode, string Sha1)>();
+            var targetTreeSha1 = CommitUtils.GetCommitTreeSha1(headTarget!);
+            var targetEntries = new Dictionary<string, (string Mode, string Sha1)>();
 
-            RecursiveReadTree(string.Empty, alvoTreeSha1, alvoEntries);
+            RecursiveReadTree(string.Empty, targetTreeSha1, targetEntries);
 
-            var allFiles = ancestralEntries.Keys
+            var allFiles = baseEntries.Keys
                 .Union(headEntries.Keys)
-                .Union(alvoEntries.Keys);
+                .Union(targetEntries.Keys);
 
             foreach (var file in allFiles)
             {
                 var headSha1 = headEntries.ContainsKey(file) ? headEntries[file].Sha1 : string.Empty;
-                var alvoSha1 = alvoEntries.ContainsKey(file) ? alvoEntries[file].Sha1 : string.Empty;
-                var ancestralSha1 = ancestralEntries.ContainsKey(file) ? ancestralEntries[file].Sha1 : string.Empty;
+                var alvoSha1 = targetEntries.ContainsKey(file) ? targetEntries[file].Sha1 : string.Empty;
+                var ancestralSha1 = baseEntries.ContainsKey(file) ? baseEntries[file].Sha1 : string.Empty;
 
                 if (!string.IsNullOrWhiteSpace(headSha1) &&
                     !string.IsNullOrWhiteSpace(alvoSha1) &&
