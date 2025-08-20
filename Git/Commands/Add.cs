@@ -44,7 +44,7 @@ namespace Git.Commands
         {
             foreach (var file in Directory.GetFiles(directory))
             {
-                if (WriteTree.ignoreFiles.Any(ignore => file.Contains(ignore)))
+                if (CommitUtils.ignoreFiles.Any(ignore => file.Contains(ignore)))
                 {
                     continue;
                 }
@@ -54,7 +54,7 @@ namespace Git.Commands
 
             foreach (var subdir in Directory.GetDirectories(directory))
             {
-                if (WriteTree.ignoreFiles.Any(ignore => subdir.Contains(ignore)))
+                if (CommitUtils.ignoreFiles.Any(ignore => subdir.Contains(ignore)))
                 {
                     continue;
                 }

@@ -5,8 +5,6 @@ namespace Csharp.Commands
 {
     public class WriteTree
     {
-        public static readonly string[] ignoreFiles = { ".gitadr", "Program.cs", "Git.csproj", "bin", "Commands", "Core", "obj", ".vs" };
-
         public static string Execute()
         {
             return WriteTreeRecursive(Directory.GetCurrentDirectory());
@@ -18,7 +16,7 @@ namespace Csharp.Commands
 
             foreach (var file in Directory.GetFiles(directory))
             {
-                if (ignoreFiles.Any(ignore => file.Contains(ignore)))
+                if (CommitUtils.ignoreFiles.Any(ignore => file.Contains(ignore)))
                 {
                     continue;
                 }
@@ -36,7 +34,7 @@ namespace Csharp.Commands
 
             foreach (var subdir in Directory.GetDirectories(directory))
             {
-                if (ignoreFiles.Any(ignore => subdir.Contains(ignore)))
+                if (CommitUtils.ignoreFiles.Any(ignore => subdir.Contains(ignore)))
                 {
                     continue;
                 }

@@ -4,6 +4,7 @@ namespace Git.Core
 {
     public class CommitUtils
     {
+        public static readonly string[] ignoreFiles = { ".gitadr", "Program.cs", "Git.csproj", "bin", "Commands", "Core", "obj", ".vs" };
         public static string GetTimestamp() => DateTimeOffset.Now.ToUnixTimeSeconds().ToString();
         public static string GetTimezone() => DateTimeOffset.Now.ToString("zzz").Replace(":", "");
 
