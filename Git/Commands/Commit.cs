@@ -25,9 +25,7 @@ namespace Git.Commands
             if (!string.IsNullOrEmpty(parentCommit))
             {
                 var headTreeSha1 = CommitUtils.GetCommitTreeSha1(parentCommit);
-                var headEntries = TreeUtils
-                    .GetTreeEntriesFromSha1(headTreeSha1)
-                    .ToDictionary(e => e.Name, e => e.Sha1);
+                var headEntries = TreeUtils.GetTreeEntriesFromSha1("", headTreeSha1, new Dictionary<string, (string Mode, string Sha1)>());
 
                 var hasChanges = false;
 
@@ -39,7 +37,7 @@ namespace Git.Commands
                 {
                     foreach (var kv in indexEntries)
                     {
-                        if (!headEntries.TryGetValue(kv.Key, out var sha1) || sha1 != kv.Value)
+                        if (!headEntries.TryGetValue(kv.Key, out var head) || head.Sha1 != kv.Value)
                         {
                             hasChanges = true;
                             break;
@@ -72,7 +70,7 @@ namespace Git.Commands
             if (!string.IsNullOrEmpty(parentCommit))
             {
                 var parentTreeSha1 = CommitUtils.GetCommitTreeSha1(parentCommit);
-                RecursiveExpandTree("", parentTreeSha1, baseFiles);
+                TreeUtils.GetTreeEntriesFromSha1("", parentTreeSha1, baseFiles);
             }
 
             foreach (var keyValue in indexMap)
@@ -126,25 +124,6 @@ namespace Git.Commands
             }
 
             return WriteDir("");
-        }
-
-        private static void RecursiveExpandTree(string prefix, string treeSha1, Dictionary<string, (string Mode, string Sha1)> dict)
-        {
-            var entries = TreeUtils.GetTreeEntriesFromSha1(treeSha1);
-
-            foreach (var entry in entries)
-            {
-                var fullPath = TreeUtils.CombinePrefix(prefix, entry.Name);
-
-                if (entry.Mode == "040000")
-                {
-                    RecursiveExpandTree(fullPath, entry.Sha1, dict);
-                }
-                else
-                {
-                    dict[fullPath] = (entry.Mode, entry.Sha1);
-                }
-            }
         }
 
         private static bool IsUnderPrefix(string path, string prefix)

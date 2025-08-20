@@ -12,7 +12,7 @@ namespace Git.Commands
                 return string.Empty;
             }
 
-            var entries = TreeUtils.GetTreeEntriesFromSha1(args[1]);
+            var entries = TreeUtils.GetTreeData(args[1]);
 
             var result = string.Empty;
 

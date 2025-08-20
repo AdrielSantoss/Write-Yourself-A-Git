@@ -113,5 +113,28 @@ namespace Git.Core
 
             return dict;
         }
+
+        public static List<string> RecursiveUpdateIndexFromTree(string prefix, string treeSha1, List<string> indexLines)
+        {
+            var treeEntries = TreeUtils.GetTreeData(treeSha1);
+
+            foreach (var entry in treeEntries)
+            {
+                var fullPath = TreeUtils.CombinePrefix(prefix, entry.Name);
+
+                if (entry.Mode == "040000")
+                {
+                    RecursiveUpdateIndexFromTree(fullPath, entry.Sha1, indexLines);
+                }
+                else
+                {
+                    indexLines.Add($"{entry.Sha1} {fullPath}");
+                }
+            }
+
+            CreateOrUpdateIndex(string.Join('\n', indexLines) + "\n");
+
+            return indexLines;
+        }
     }
 }

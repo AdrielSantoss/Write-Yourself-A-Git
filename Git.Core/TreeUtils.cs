@@ -11,7 +11,7 @@ namespace Git.Core
             public required string Sha1 { get; set; }
         }
 
-        public static List<TreeEntry> GetTreeEntriesFromSha1(string sha1Param)
+        public static List<TreeEntry> GetTreeData(string sha1Param)
         {
             var data = Sha1Utils.GetObjectDataBySha1(sha1Param);
 
@@ -38,6 +38,27 @@ namespace Git.Core
             }
 
             return entries;
+        }
+
+        public static Dictionary<string, (string Mode, string Sha1)> GetTreeEntriesFromSha1(string prefix, string treeSha1, Dictionary<string, (string Mode, string Sha1)> dict)
+        {
+            var entries = GetTreeData(treeSha1);
+
+            foreach (var entry in entries)
+            {
+                var fullPath = TreeUtils.CombinePrefix(prefix, entry.Name);
+
+                if (entry.Mode == "040000")
+                {
+                    GetTreeEntriesFromSha1(fullPath, entry.Sha1, dict);
+                }
+                else
+                {
+                    dict[fullPath] = (entry.Mode, entry.Sha1);
+                }
+            }
+
+            return dict;
         }
 
         public static string CombinePrefix(string prefix, string name)

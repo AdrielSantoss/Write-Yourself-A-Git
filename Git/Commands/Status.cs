@@ -23,7 +23,7 @@ namespace Git.Commands
             if (!string.IsNullOrWhiteSpace(commitHead))
             {
                 var commitTreeSha1 = CommitUtils.GetCommitTreeSha1(commitHead);
-                RecursiveReadTree("", commitTreeSha1, headFiles);
+                TreeUtils.GetTreeEntriesFromSha1("", commitTreeSha1, headFiles);
             }
 
             var indexFiles = CommitUtils.GetIndexEntries(false);
@@ -115,25 +115,6 @@ namespace Git.Commands
             if (!staged.Any() && !modified.Any() && !deleted.Any() && !untracked.Any())
             {
                 Console.WriteLine("nothing to commit, working tree clean");
-            }
-        }
-
-        private static void RecursiveReadTree(string prefix, string treeSha1, Dictionary<string, (string Mode, string Sha1)> dict)
-        {
-            var entries = TreeUtils.GetTreeEntriesFromSha1(treeSha1);
-
-            foreach (var entry in entries)
-            {
-                var fullPath = TreeUtils.CombinePrefix(prefix, entry.Name);
-
-                if (entry.Mode == "040000")
-                {
-                    RecursiveReadTree(fullPath, entry.Sha1, dict);
-                }
-                else
-                {
-                    dict[fullPath] = (entry.Mode, entry.Sha1);
-                }
             }
         }
 

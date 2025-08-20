@@ -27,19 +27,13 @@ namespace Git.Commands
             var commitBase = targetCommits!.Intersect(headCommits!).First();
 
             var baseTreeSha1 = CommitUtils.GetCommitTreeSha1(commitBase);
-            var baseEntries = new Dictionary<string, (string Mode, string Sha1)>();
-
-            RecursiveReadTree(string.Empty, baseTreeSha1, baseEntries);
+            var baseEntries = TreeUtils.GetTreeEntriesFromSha1(string.Empty, baseTreeSha1, new Dictionary<string, (string Mode, string Sha1)>());
 
             var headTreeSha1 = CommitUtils.GetCommitTreeSha1(headCommit);
-            var headEntries = new Dictionary<string, (string Mode, string Sha1)>();
-
-            RecursiveReadTree(string.Empty, headTreeSha1, headEntries);
+            var headEntries = TreeUtils.GetTreeEntriesFromSha1(string.Empty, headTreeSha1, new Dictionary<string, (string Mode, string Sha1)>());
 
             var targetTreeSha1 = CommitUtils.GetCommitTreeSha1(headTarget!);
-            var targetEntries = new Dictionary<string, (string Mode, string Sha1)>();
-
-            RecursiveReadTree(string.Empty, targetTreeSha1, targetEntries);
+            var targetEntries = TreeUtils.GetTreeEntriesFromSha1(string.Empty, targetTreeSha1, new Dictionary<string, (string Mode, string Sha1)>());
 
             var allFiles = baseEntries.Keys
                 .Union(headEntries.Keys)
@@ -61,7 +55,7 @@ namespace Git.Commands
                 if ((headSha1 == ancestralSha1) && (alvoSha1 != ancestralSha1))
                 {
                     AddOrUpdateIndexFile(file, alvoSha1);
-                    WriteFileFromSha1(Path.Combine(Directory.GetCurrentDirectory(), file), alvoSha1);
+                    Sha1Utils.WriteFileAndDirectoriesFromSha1(Path.Combine(Directory.GetCurrentDirectory(), file), alvoSha1);
 
                     continue;
                 }
@@ -89,7 +83,7 @@ namespace Git.Commands
                     else if (!string.IsNullOrWhiteSpace(alvoSha1) && string.IsNullOrWhiteSpace(headSha1))
                     {
                         AddOrUpdateIndexFile(file, alvoSha1);
-                        WriteFileFromSha1(Path.Combine(Directory.GetCurrentDirectory(), file), alvoSha1);
+                        Sha1Utils.WriteFileAndDirectoriesFromSha1(Path.Combine(Directory.GetCurrentDirectory(), file), alvoSha1);
 
                         continue;
                     }
@@ -114,24 +108,6 @@ namespace Git.Commands
             }
         }
 
-        private static void RecursiveReadTree(string prefix, string treeSha1, Dictionary<string, (string Mode, string Sha1)> dict)
-        {
-            var entries = TreeUtils.GetTreeEntriesFromSha1(treeSha1);
-
-            foreach (var entry in entries)
-            {
-                var fullPath = TreeUtils.CombinePrefix(prefix, entry.Name);
-
-                if (entry.Mode == "040000")
-                {
-                    RecursiveReadTree(fullPath, entry.Sha1, dict);
-                }
-                else
-                {
-                    dict[fullPath] = (entry.Mode, entry.Sha1);
-                }
-            }
-        }
         public static void AddOrUpdateIndexFile(string file, string sha1)
         {
             var lines = CommitUtils.GetIndexEntries(true);
@@ -181,21 +157,6 @@ namespace Git.Commands
             }
 
             CommitUtils.CreateOrUpdateIndex(string.Join('\n', newContentLines) + "\n");
-        }
-
-        public static void WriteFileFromSha1(string path, string sha1)
-        {
-            var data = Sha1Utils.GetObjectDataBySha1(sha1);
-            var nullIndex = Array.IndexOf(data, (byte)0);
-            var blob = data[(nullIndex + 1)..];
-
-            var dir = Path.GetDirectoryName(path);
-            if (!string.IsNullOrEmpty(dir))
-            {
-                Directory.CreateDirectory(dir);
-            }
-
-            File.WriteAllBytes(path, blob);
         }
     }
 }

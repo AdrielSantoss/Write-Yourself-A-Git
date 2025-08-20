@@ -66,5 +66,20 @@ namespace Git.Core
 
             return data;
         }
+
+        public static void WriteFileAndDirectoriesFromSha1(string path, string sha1)
+        {
+            var data = GetObjectDataBySha1(sha1);
+            var nullIndex = Array.IndexOf(data, (byte)0);
+            var blob = data[(nullIndex + 1)..];
+
+            var dir = Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
+
+            File.WriteAllBytes(path, blob);
+        }
     }
 }

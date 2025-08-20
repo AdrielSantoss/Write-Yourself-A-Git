@@ -24,10 +24,10 @@ namespace Git.Commands
 
             var workSpaceEntries  = CommitUtils.RecursiveReadWorkSapce(Directory.GetCurrentDirectory());
             var indexEntries = CommitUtils.GetIndexEntries(false);
+
             var targetBranchHead = BranchUtils.GetCommitHeadFromBranch(branchName);
             var targetBranchTreeSha1 = CommitUtils.GetCommitTreeSha1(targetBranchHead!);
-            var targetBranchEntries = new Dictionary<string, string>();
-            targetBranchEntries = RecursiveReadTree2("", targetBranchTreeSha1, targetBranchEntries);
+            var targetBranchEntries = TreeUtils.GetTreeEntriesFromSha1("", targetBranchTreeSha1, new Dictionary<string, (string Mode, string Sha1)>());
 
             var fullEntries = workSpaceEntries.Keys.Union(indexEntries.Keys);
 
@@ -35,7 +35,7 @@ namespace Git.Commands
             {
                 var wsSha1 = workSpaceEntries.ContainsKey(entry) ? workSpaceEntries[entry] : null;
                 var idxSha1 = indexEntries.ContainsKey(entry) ? indexEntries[entry] : null;
-                var tgtSha1 = targetBranchEntries.ContainsKey(entry) ? targetBranchEntries[entry] : null;
+                var tgtSha1 = targetBranchEntries.ContainsKey(entry) ? targetBranchEntries[entry].Sha1 : null;
 
                 if (idxSha1 == null && wsSha1 != null && tgtSha1 != null)
                 {
@@ -60,23 +60,22 @@ namespace Git.Commands
 
             var indexLines = new List<string>();
                
-            var newIndexLines = RecursiveReadTree("", targetBranchTreeSha1, indexLines);
-
-            CommitUtils.CreateOrUpdateIndex(string.Join('\n', newIndexLines) + "\n");
+            CommitUtils.RecursiveUpdateIndexFromTree("", targetBranchTreeSha1, indexLines);
 
             var fullNewWs = targetBranchEntries.Keys.Union(workSpaceEntries.Keys);
 
             foreach (var entry in fullNewWs)
             {
-                var tgtSha1 = targetBranchEntries.ContainsKey(entry) ? targetBranchEntries[entry] : null;
+                var tgtSha1 = targetBranchEntries.ContainsKey(entry) ? targetBranchEntries[entry].Sha1 : null;
                 var wsSha1 = workSpaceEntries.ContainsKey(entry) ? workSpaceEntries[entry] : null;
 
                 if (tgtSha1 != null && wsSha1 != null)
                 {
                     if (tgtSha1 != wsSha1)
                     {
-                        WriteFileFromSha1(entry, tgtSha1);
+                        Sha1Utils.WriteFileAndDirectoriesFromSha1(entry, tgtSha1);
                     }
+
                     continue;
                 }
 
@@ -88,69 +87,12 @@ namespace Git.Commands
 
                 if (wsSha1 == null && tgtSha1 != null)
                 {
-                    WriteFileFromSha1(entry, tgtSha1);
+                    Sha1Utils.WriteFileAndDirectoriesFromSha1(entry, tgtSha1);
                     continue;
                 }
             }
 
             Console.WriteLine($"Branch atual alterado com sucesso para {branchName}");
-        }
-
-        public static List<string> RecursiveReadTree(string prefix, string treeSha1, List<string> indexLines)
-        {
-            var treeEntries = TreeUtils.GetTreeEntriesFromSha1(treeSha1);
-
-            foreach (var entry in treeEntries)
-            {
-                var fullPath = TreeUtils.CombinePrefix(prefix, entry.Name);
-
-                if (entry.Mode == "040000")
-                {
-                    RecursiveReadTree(fullPath, entry.Sha1, indexLines);
-                }
-                else
-                {
-                    indexLines.Add($"{entry.Sha1} {fullPath}");
-                }
-            }
-
-            return indexLines;
-        }
-
-        private static Dictionary<string, string> RecursiveReadTree2(string prefix, string treeSha1, Dictionary<string, string> dict)
-        {
-            var entries = TreeUtils.GetTreeEntriesFromSha1(treeSha1);
-
-            foreach (var entry in entries)
-            {
-                var fullPath = TreeUtils.CombinePrefix(prefix, entry.Name);
-
-                if (entry.Mode == "040000")
-                {
-                    RecursiveReadTree2(fullPath, entry.Sha1, dict);
-                }
-                else
-                {
-                    dict[fullPath] = entry.Sha1;
-                }
-            }
-
-            return dict;
-        }
-
-        public static void WriteFileFromSha1(string path, string sha1)
-        {
-            var data = Sha1Utils.GetObjectDataBySha1(sha1);
-            var nullIndex = Array.IndexOf(data, (byte)0);
-            var blob = data[(nullIndex + 1)..];
-
-            var dir = Path.GetDirectoryName(path);
-            if (!string.IsNullOrEmpty(dir))
-            {
-                Directory.CreateDirectory(dir);
-            }
-
-            File.WriteAllBytes(path, blob);
         }
     }
 }
