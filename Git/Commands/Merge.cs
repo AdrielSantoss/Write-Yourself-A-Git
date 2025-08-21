@@ -106,6 +106,8 @@ namespace Git.Commands
                     }
                 }
             }
+
+            BranchUtils.CreateOrUpdateBranch(headBranch.Replace("ref: ", string.Empty), headTarget!);
         }
 
         public static void AddOrUpdateIndexFile(string file, string sha1)
