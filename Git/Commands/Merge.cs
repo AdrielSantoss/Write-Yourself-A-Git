@@ -24,6 +24,13 @@ namespace Git.Commands
             var headCommits = BranchUtils.GetAllCommitsFromBranch(headBranch.Replace(@$"ref: refs{Path.DirectorySeparatorChar}heads{Path.DirectorySeparatorChar}", string.Empty));
             var targetCommits = BranchUtils.GetAllCommitsFromBranch(targetBranch);
 
+            if (headCommits!.All(commit => targetCommits!.Contains(commit))) 
+            {
+                Console.WriteLine($"Already up to date.");
+
+                return;
+            }
+
             var commitBase = targetCommits!.Intersect(headCommits!).First();
 
             var baseTreeSha1 = CommitUtils.GetCommitTreeSha1(commitBase);
