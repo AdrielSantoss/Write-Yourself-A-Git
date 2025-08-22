@@ -14,8 +14,12 @@ Este projeto é uma implementação educacional de comandos básicos do Git em C
     - `Add.cs` - Adiciona arquivos ao índice.
     - `Commit.cs` - Cria um commit com os objetos atuais.
     - `LsTree.cs` - Lista o conteúdo de uma tree.
-    - `Reset.cs` - Reseta o HEAD para um commit específico.
+    - `Rm.cs` - Remove arquivos do indice.
     - `Log.cs` - Exibe o histórico de commits.
+    - `Branch.cs` - Cria novos branches.
+    - `Switch.cs` - Troca entre branches.
+    - `Status.cs` - Mostra o estado da árvore de trabalho e staging.
+    - `Merge.cs` - Faz merge entre branches.
   - `Core/` - Lógica interna para manipulação de objetos Git:
     - `ObjectStore.cs` - Gerenciamento de armazenamento de objetos.
     - `TreeObject.cs` - Manipulação de árvores de objetos.
@@ -24,20 +28,24 @@ Este projeto é uma implementação educacional de comandos básicos do Git em C
 - `Git.Test/` - Testes automatizados para os comandos implementados.
 
 ## ▶️ Como executar
-1. Abra a solução `Write.Yourself.A.Git.sln` no Visual Studio.
-2. Compile o projeto.
-3. Execute os comandos disponíveis pelo terminal ou configure para rodar pelo Visual Studio.
+1. Clone o projeto
+2. Execute o script de instalação em /Installer/installer.ps1.
+3. Após instalação, os comandos já estarão disponiveis para serem executados pelo executável "gitadr"
 
 ## ✅ Funcionalidades já implementadas
-- Inicialização de repositório (`init`)
-- Hash e armazenamento de arquivos (`hash-object`)
-- Exibição de objetos (`cat-file`)
-- Hash e armazenamento de arquivos e diretórios (`write-tree`)
-- Adição ao índice (`add`)
-- Commit (`commit`)
-- Listagem de trees (`ls-tree`)
-- Reset de HEAD (`reset`)
-- Log de commits (`log`)
+- Inicialização de repositório (`gitadr init`)
+- Hash e armazenamento de arquivos (`gitadr hash-object`)
+- Exibição de objetos (`gitadr cat-file`)
+- Hash e armazenamento de arquivos e diretórios (`gitadr write-tree`)
+- Adição ao índice (`gitadr add`)
+- Remoção do índice (`gitadr rm`)
+- Commit (`gitadr commit`)
+- Listagem de trees (`gitadr ls-tree`)
+- Log de commits (`gitadr log`)
+- Criação de branches (`gitadr branch`)
+- Troca de branch (`gitadr switch`)
+- Status da árvore de trabalho (`gitadr status`)
+- Merge de branches (`gitadr merge`)
 
 ## 🛠️ Funcionalidades planejadas
 - Implementação de outros comandos do Git
