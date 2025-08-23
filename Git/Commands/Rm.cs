@@ -8,7 +8,7 @@ namespace Git.Commands
         {
             if (args.Length < 1)
             {
-                Console.WriteLine("Uso: dotnet run -- rm <arquivo>");
+                Console.WriteLine("Uso: gitadr rm <arquivo | diretório>");
                 return;
             }
 
@@ -21,42 +21,63 @@ namespace Git.Commands
                 return;
             }
 
-            var file = args[0];
-
+            var target = NormalizePath(args[0]);
             var content = File.ReadAllText(pathIndex);
-            var lines = string.IsNullOrWhiteSpace(content) ? Array.Empty<string>() : content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            var lines = string.IsNullOrWhiteSpace(content)
+                ? Array.Empty<string>()
+                : content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
             var newContentLines = new List<string>();
-            var found = false;
+            var removedEntries = new List<string>();
 
             foreach (var line in lines)
             {
                 var parts = line.Split(' ', 2);
-
                 if (parts.Length != 2)
-                    continue;
-
-                var fileName = parts[1];
-
-                if (fileName == file)
                 {
-                    found = true;
                     continue;
                 }
-                else
+
+                var fileName = NormalizePath(parts[1]);
+
+                if (fileName == target)
                 {
-                    newContentLines.Add(line);
+                    removedEntries.Add(fileName);
+                    continue;
                 }
+
+                if (Directory.Exists(target) && fileName.StartsWith(target + Path.DirectorySeparatorChar))
+                {
+                    removedEntries.Add(fileName);
+                    continue;
+                }
+
+                newContentLines.Add(line);
             }
 
-            if (!found) 
+            if (removedEntries.Count == 0)
             {
-                Console.WriteLine($"Arquivo '{file}' não está na staging area.");
+                Console.WriteLine($"'{target}' não está na staging area.");
                 return;
             }
 
             CommitUtils.CreateOrUpdateIndex(string.Join('\n', newContentLines) + "\n");
-            Console.WriteLine($"Arquivo '{file}' removido da staging area.");
+
+            if (removedEntries.Count == 1)
+            {
+                Console.WriteLine($"Arquivo '{removedEntries[0]}' removido da staging area.");
+            }
+            else
+            {
+                Console.WriteLine($"Removidos {removedEntries.Count} arquivos da staging area (diretório '{target}').");
+            }
+        }
+
+        private static string NormalizePath(string path)
+        {
+            return path.Replace('/', Path.DirectorySeparatorChar)
+                       .Replace('\\', Path.DirectorySeparatorChar)
+                       .TrimEnd(Path.DirectorySeparatorChar);
         }
     }
 }

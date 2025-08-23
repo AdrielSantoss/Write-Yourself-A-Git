@@ -8,7 +8,7 @@ namespace Git.Commands
         {
             if (args.Length < 1)
             {
-                Console.WriteLine("Uso: dotnet run -- switch <nome_do_branch>");
+                Console.WriteLine("Uso: gitadr switch <branch>");
                 return;
             }
 
@@ -18,7 +18,7 @@ namespace Git.Commands
 
             if (existHeadFile == null)
             {
-                Console.WriteLine($"Não existe um branch com o nome {branchName}");
+                Console.WriteLine($"Não existe um branch com o nome {branchName}.");
                 return;
             }
 

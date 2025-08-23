@@ -49,7 +49,12 @@ namespace Csharp.Commands
                 });
             }
 
-            return TreeObject.WriteTree(entries);
+            if (entries.Count > 0)
+            {
+                return TreeObject.WriteTree(entries);
+            }
+
+            return string.Empty;
         }
     }
 }

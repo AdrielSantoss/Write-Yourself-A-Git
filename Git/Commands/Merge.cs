@@ -6,6 +6,12 @@ namespace Git.Commands
     {
         public static void Execute(string[] args)
         {
+            if (args.Length < 1)
+            {
+                Console.WriteLine("Uso: gitadr merge <branch>");
+                return;
+            }
+
             var targetBranch = args[0];
 
             var headTargetBranch = BranchUtils.GetCommitHeadFromBranch(targetBranch);

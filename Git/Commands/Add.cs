@@ -9,7 +9,7 @@ namespace Git.Commands
         {
             if (args.Length < 1)
             {
-                Console.WriteLine("Uso: dotnet run -- add <arquivo>");
+                Console.WriteLine("Uso: gitadr add <arquivo | diretório | .>");
                 return;
             }
 

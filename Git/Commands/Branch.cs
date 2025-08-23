@@ -8,7 +8,7 @@ namespace Git.Commands
         {
             if (args.Length < 1)
             {
-                Console.WriteLine("Uso: dotnet run -- branch <nome_do_branch>");
+                Console.WriteLine("Uso: gitadr branch <branch>");
                 return;
             }
 

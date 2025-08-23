@@ -8,7 +8,7 @@ namespace Git.Commands
         {
             if (args.Length < 1)
             {
-                Console.WriteLine("Uso: dotnet run -- restore <arquivo|diretorio|.>");
+                Console.WriteLine("Uso: gitadr restore <arquivo | diretório | .>");
                 return;
             }
 
@@ -28,7 +28,7 @@ namespace Git.Commands
             {
                 foreach (var entry in headEntries)
                 {
-                    WriteFileFromSha1(entry.Key, entry.Value.Sha1);
+                    Sha1Utils.WriteFileAndDirectoriesFromSha1(entry.Key, entry.Value.Sha1);
                 }
 
                 Console.WriteLine("Workspace restaurada com sucesso a partir do HEAD.");
@@ -39,7 +39,7 @@ namespace Git.Commands
                 {
                     if (entry.Key.StartsWith(target))
                     {
-                        WriteFileFromSha1(entry.Key, entry.Value.Sha1);
+                        Sha1Utils.WriteFileAndDirectoriesFromSha1(entry.Key, entry.Value.Sha1);
                     }
                 }
 
@@ -47,26 +47,13 @@ namespace Git.Commands
             }
             else if (headEntries.ContainsKey(target))
             {
-                WriteFileFromSha1(target, headEntries[target].Sha1);
+                Sha1Utils.WriteFileAndDirectoriesFromSha1(target, headEntries[target].Sha1);
                 Console.WriteLine($"Arquivo '{target}' restaurado com sucesso.");
             }
             else
             {
                 Console.WriteLine($"O caminho '{target}' não existe no último commit.");
             }
-        }
-
-        private static void WriteFileFromSha1(string path, string sha1)
-        {
-            var blobContent = Sha1Utils.GetObjectDataBySha1(sha1);
-            var dir = Path.GetDirectoryName(path);
-
-            if (!string.IsNullOrEmpty(dir))
-            {
-                Directory.CreateDirectory(dir);
-            }
-
-            File.WriteAllBytes(path, blobContent);
         }
     }
 }

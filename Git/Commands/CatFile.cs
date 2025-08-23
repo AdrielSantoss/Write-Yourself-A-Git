@@ -9,7 +9,7 @@ namespace Csharp.Commands
         {
             if (args.Length < 2 || args[0] != "-p")
             {
-                Console.WriteLine("Uso: dotnet run -- cat-file [-p] <hash>");
+                Console.WriteLine("Uso: gitadr cat-file [-p] <hash>");
                 return string.Empty;
             }
 

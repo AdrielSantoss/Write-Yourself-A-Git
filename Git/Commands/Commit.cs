@@ -9,7 +9,7 @@ namespace Git.Commands
         {
             if (args.Length < 2 || args[0] != "-m")
             {
-                Console.WriteLine("Uso: dotnet run -- commit [-m] <mensagem_do_commit>");
+                Console.WriteLine("Uso: gitadr commit [-m] <mensagem_do_commit>");
                 return string.Empty;
             }
 
@@ -48,7 +48,7 @@ namespace Git.Commands
 
                 if (!hasChanges)
                 {
-                    Console.WriteLine("nothing to commit, working tree clean");
+                    Console.WriteLine("working tree limpa.");
                     return string.Empty;
                 }
             }
@@ -58,8 +58,6 @@ namespace Git.Commands
             var commitSha1 = CommitObject.WriteCommit(rootSha1, args[1]);
 
             UpdateHead(commitSha1);
-
-            Console.WriteLine(commitSha1);
 
             return commitSha1;
         }

@@ -3,7 +3,7 @@ using Git.Commands;
 
 if (args.Length == 0)
 {
-    Console.WriteLine("Uso: dotnet run -- <comando_git>");
+    Console.WriteLine("Uso: gitadr <comando_git>");
     return;
 }
 

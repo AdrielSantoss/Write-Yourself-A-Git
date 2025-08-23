@@ -8,7 +8,7 @@ namespace Git.Commands
         {
             if (args.Length < 2 || args[0] != "-p")
             {
-                Console.WriteLine("Uso: dotnet run -- ls-tree [-p] <hash>");
+                Console.WriteLine("Uso: gitadr ls-tree [-p] <hash>");
                 return string.Empty;
             }
 

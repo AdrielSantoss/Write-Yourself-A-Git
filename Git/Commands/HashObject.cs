@@ -9,7 +9,7 @@ namespace Csharp.Commands
         {
             if (args.Length < 1)
             {
-                Console.WriteLine("Uso: dotnet run -- hash-object [-w] <arquivo>");
+                Console.WriteLine("Uso: gitadr hash-object [-w] <arquivo>");
                 return string.Empty;
             }
 
