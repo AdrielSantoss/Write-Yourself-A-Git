@@ -30,7 +30,7 @@ namespace Git.Commands
             var headCommits = BranchUtils.GetAllCommitsFromBranch(headBranch.Replace(@$"ref: refs{Path.DirectorySeparatorChar}heads{Path.DirectorySeparatorChar}", string.Empty));
             var targetCommits = BranchUtils.GetAllCommitsFromBranch(targetBranch);
 
-            if (headCommits!.All(commit => targetCommits!.Contains(commit))) 
+            if (targetCommits!.All(commit => headCommits!.Contains(commit))) 
             {
                 Console.WriteLine($"Already up to date.");
 
