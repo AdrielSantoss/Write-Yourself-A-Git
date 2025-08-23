@@ -1,4 +1,5 @@
-﻿using Git.Core;
+﻿using Csharp.Core;
+using Git.Core;
 
 namespace Git.Commands
 {
@@ -52,6 +53,10 @@ namespace Git.Commands
                 .Union(headEntries.Keys)
                 .Union(targetEntries.Keys);
 
+            var mergedEntries = new List<TreeEntry>();
+            var addedOrUpdatedFiles = new Dictionary<string, string>();
+            var removedFiles = new Dictionary<string, string>();
+
             foreach (var file in allFiles)
             {
                 var headSha1 = headEntries.ContainsKey(file) ? headEntries[file].Sha1 : string.Empty;
@@ -67,8 +72,7 @@ namespace Git.Commands
 
                 if ((headSha1 == ancestralSha1) && (alvoSha1 != ancestralSha1))
                 {
-                    AddOrUpdateIndexFile(file, alvoSha1);
-                    Sha1Utils.WriteFileAndDirectoriesFromSha1(Path.Combine(Directory.GetCurrentDirectory(), file), alvoSha1);
+                    addedOrUpdatedFiles.Add(Path.Combine(Directory.GetCurrentDirectory(), file), alvoSha1);
 
                     continue;
                 }
@@ -84,7 +88,7 @@ namespace Git.Commands
                     (headSha1 != alvoSha1))
                 {
                     Console.WriteLine($"Ocorreu um conflito no arquivo: {file}");
-                    continue;
+                    return;
                 }
 
                 if (string.IsNullOrWhiteSpace(ancestralSha1))
@@ -93,10 +97,10 @@ namespace Git.Commands
                     {
                         continue;
                     }
-                    else if (!string.IsNullOrWhiteSpace(alvoSha1) && string.IsNullOrWhiteSpace(headSha1))
+
+                    if (!string.IsNullOrWhiteSpace(alvoSha1) && string.IsNullOrWhiteSpace(headSha1))
                     {
-                        AddOrUpdateIndexFile(file, alvoSha1);
-                        Sha1Utils.WriteFileAndDirectoriesFromSha1(Path.Combine(Directory.GetCurrentDirectory(), file), alvoSha1);
+                        addedOrUpdatedFiles.Add(Path.Combine(Directory.GetCurrentDirectory(), file), alvoSha1);
 
                         continue;
                     }
@@ -108,17 +112,32 @@ namespace Git.Commands
                     {
                         continue;
                     }
-                    else if (string.IsNullOrWhiteSpace(headSha1) && alvoSha1 == ancestralSha1)
+                    
+                    if (string.IsNullOrWhiteSpace(headSha1) && alvoSha1 == ancestralSha1)
                     {
                         continue;
                     }
-                    else if (string.IsNullOrWhiteSpace(alvoSha1) && headSha1 == ancestralSha1)
+
+                    if (string.IsNullOrWhiteSpace(alvoSha1) && headSha1 == ancestralSha1)
                     {
-                        RemoveIndexFile(file);
-                        File.Delete(Path.Combine(Directory.GetCurrentDirectory(), file));
+                        removedFiles.Add(Path.Combine(Directory.GetCurrentDirectory(), file), alvoSha1);
                     }
                 }
             }
+
+            foreach (var file in addedOrUpdatedFiles.Keys)
+            {
+                AddOrUpdateIndexFile(file, addedOrUpdatedFiles[file]);
+                Sha1Utils.WriteFileAndDirectoriesFromSha1(file, addedOrUpdatedFiles[file]);
+            }
+
+            foreach (var file in removedFiles.Keys)
+            {
+                RemoveIndexFile(file);
+                File.Delete(file);
+            }
+
+            var rootSha1= TreeObject.WriteTree(mergedEntries);
 
             BranchUtils.CreateOrUpdateBranch(headBranch.Replace("ref: ", string.Empty), headTarget!);
         }
