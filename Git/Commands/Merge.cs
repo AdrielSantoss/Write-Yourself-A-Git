@@ -17,14 +17,14 @@ namespace Git.Commands
             var ffOnly = false;
             string targetBranch;
 
-            if (args.Length >= 2 && args[1] == "--ff-only")
+            if (args[0] == "--ff-only" && args.Length >= 2)
             {
                 ffOnly = true;
-                targetBranch = args[0];
+                targetBranch = args[1];
             }
             else
             {
-                targetBranch = args[0];
+                targetBranch = args[1];
             }
 
             var targetCommit = BranchUtils.GetCommitHeadFromBranch(targetBranch);
