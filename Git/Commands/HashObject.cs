@@ -7,7 +7,7 @@ namespace Csharp.Commands
     {
         public static string Execute(string[] args)
         {
-            if (args.Length < 2 || args[0] != "-w")
+            if (args.Length < 1)
             {
                 Console.WriteLine("Uso: dotnet run -- hash-object [-w] <arquivo>");
                 return string.Empty;
@@ -22,11 +22,14 @@ namespace Csharp.Commands
             }
 
             var (sha1Hash, fullBlob) = BlobUtils.WriteBlob(path);
-            Console.WriteLine(sha1Hash);
 
             if (write)
             {
                 ObjectStore.WriteObject(sha1Hash, fullBlob);
+            }
+            else
+            {
+                Console.WriteLine(sha1Hash);
             }
 
             return sha1Hash;

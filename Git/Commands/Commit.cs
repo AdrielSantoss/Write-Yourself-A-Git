@@ -17,7 +17,8 @@ namespace Git.Commands
 
             if (indexEntries == null || indexEntries.Keys.Count == 0)
             {
-                throw new Exception("Nenhum arquivo na staging area.");
+                Console.WriteLine("Nenhum arquivo na staging area.");
+                return string.Empty;
             }
 
             var parentCommit = CommitUtils.GetLastCommitSha1FromHead();

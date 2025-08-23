@@ -54,7 +54,7 @@ namespace Git.Commands
                     return;
                 }
 
-                if (tgtSha1 != null && idxSha1 != null && idxSha1 != tgtSha1 && idxSha1 != headSha1) // continuar aqui, testar
+                if (tgtSha1 != null && idxSha1 != null && idxSha1 != tgtSha1 && idxSha1 != headSha1)
                 {
                     Console.WriteLine($"Existem mudanças staged que conflitam com o branch alvo para '{entry}'.");
                     return;
