@@ -1,6 +1,5 @@
 ﻿using Csharp.Core;
 using Git.Core;
-using static Git.Core.TreeUtils;
 using TreeEntry = Git.Core.TreeUtils.TreeEntry;
 
 namespace Git.Commands
@@ -15,133 +14,195 @@ namespace Git.Commands
                 return;
             }
 
-            var targetBranch = args[0];
+            var ffOnly = false;
+            string targetBranch;
 
-            var headTargetBranch = BranchUtils.GetCommitHeadFromBranch(targetBranch);
+            if (args.Length >= 2 && args[1] == "--ff-only")
+            {
+                ffOnly = true;
+                targetBranch = args[0];
+            }
+            else
+            {
+                targetBranch = args[0];
+            }
 
-            if (headTargetBranch == null)
+            var targetCommit = BranchUtils.GetCommitHeadFromBranch(targetBranch);
+
+            if (targetCommit == null)
             {
                 Console.WriteLine($"Não existe um branch com o nome {targetBranch}");
                 return;
             }
 
-            var headCommit = CommitUtils.GetLastCommitSha1FromHead();
             var headBranch = BranchUtils.GetHead();
+            var headCommit = CommitUtils.GetLastCommitSha1FromHead();
+            var headCommits = BranchUtils.GetAllCommitsFromBranch(headBranch.Replace($"ref: refs{Path.DirectorySeparatorChar}heads{Path.DirectorySeparatorChar}", ""));
 
-            var headTarget = BranchUtils.GetCommitHeadFromBranch(targetBranch);
-
-            var headCommits = BranchUtils.GetAllCommitsFromBranch(headBranch.Replace(@$"ref: refs{Path.DirectorySeparatorChar}heads{Path.DirectorySeparatorChar}", string.Empty));
+            var targetTreeSha1 = CommitUtils.GetCommitTreeSha1(targetCommit);
             var targetCommits = BranchUtils.GetAllCommitsFromBranch(targetBranch);
 
-            if (targetCommits!.All(commit => headCommits!.Contains(commit))) 
+            if (targetCommits!.All(commit => headCommits!.Contains(commit)))
             {
                 Console.WriteLine($"Already up to date.");
 
                 return;
             }
 
+            var canFastForward = headCommits!.All(c => targetCommits!.Contains(c));
+
+            if (canFastForward)
+            {
+                var indexLines = new List<string>();
+
+                CommitUtils.RecursiveUpdateIndexFromTree("", targetTreeSha1, indexLines);
+
+                foreach (var entry in TreeUtils.GetTreeData(targetTreeSha1))
+                {
+                    if (!entry.Mode.StartsWith("040"))
+                    {
+                        Sha1Utils.WriteFileAndDirectoriesFromSha1(entry.Name, entry.Sha1);
+                    }
+                }
+
+                BranchUtils.CreateOrUpdateBranch(headBranch.Replace("ref: ", string.Empty), targetCommit);
+                Console.WriteLine($"Fast-forward merge realizado para {targetBranch}");
+                return;
+            }
+
+            if (ffOnly)
+            {
+                Console.WriteLine($"Não é possível realizar fast-forward merge para {targetBranch}, abortando.");
+                return;
+            }
+
             var commitBase = targetCommits!.Intersect(headCommits!).First();
 
             var baseTreeSha1 = CommitUtils.GetCommitTreeSha1(commitBase);
-            var baseEntries = TreeUtils.GetTreeEntriesFromSha1(string.Empty, baseTreeSha1, new Dictionary<string, (string Mode, string Sha1)>());
+            var baseEntries = TreeUtils.GetTreeData(baseTreeSha1);
 
             var headTreeSha1 = CommitUtils.GetCommitTreeSha1(headCommit);
-            var headEntries = TreeUtils.GetTreeEntriesFromSha1(string.Empty, headTreeSha1, new Dictionary<string, (string Mode, string Sha1)>());
+            var headEntries = TreeUtils.GetTreeData(headTreeSha1);
 
-            var targetTreeSha1 = CommitUtils.GetCommitTreeSha1(headTarget!);
-            var targetEntries = TreeUtils.GetTreeEntriesFromSha1(string.Empty, targetTreeSha1, new Dictionary<string, (string Mode, string Sha1)>());
+            var targetEntries = TreeUtils.GetTreeData(targetTreeSha1);
 
-            var allFiles = baseEntries.Keys
-                .Union(headEntries.Keys)
-                .Union(targetEntries.Keys);
-
-            var mergedEntries = new List<TreeEntry>();
             var addedOrUpdatedFiles = new Dictionary<string, string>();
             var removedFiles = new Dictionary<string, string>();
 
-            foreach (var file in allFiles)
-            {
-                var headSha1 = headEntries.ContainsKey(file) ? headEntries[file].Sha1 : string.Empty;
-                var alvoSha1 = targetEntries.ContainsKey(file) ? targetEntries[file].Sha1 : string.Empty;
-                var ancestralSha1 = baseEntries.ContainsKey(file) ? baseEntries[file].Sha1 : string.Empty;
+            var mergedEntries = BuildTreeFromDiffs(baseEntries, headEntries, targetEntries);
 
-                if (!string.IsNullOrWhiteSpace(headSha1) &&
-                    !string.IsNullOrWhiteSpace(alvoSha1) &&
-                    headSha1 == alvoSha1)
+            if (mergedEntries.Count > 0)
+            {
+                var currentIndex = CommitUtils.GetIndexEntries(true);
+
+                var survivingFiles = new HashSet<string>();
+
+                foreach (var entry in mergedEntries)
+                {
+                    if (entry.Mode.StartsWith("040"))
+                    {
+                        continue;
+                    }
+
+                    AddOrUpdateIndexFile(entry.Name, entry.Sha1);
+                    survivingFiles.Add(entry.Name);
+
+                    Sha1Utils.WriteFileAndDirectoriesFromSha1(entry.Name, entry.Sha1);
+                }
+
+                foreach (var file in currentIndex.Keys)
+                {
+                    if (!survivingFiles.Contains(file))
+                    {
+                        RemoveIndexFile(file);
+                        if (File.Exists(file))
+                            File.Delete(file);
+                    }
+                }
+
+                var rootSha1 = TreeObject.WriteTree(mergedEntries);
+
+                BranchUtils.CreateOrUpdateBranch(
+                    headBranch.Replace("ref: ", string.Empty),
+                    targetCommit!
+                );
+            }
+        }
+
+        public static List<TreeEntry> BuildTreeFromDiffs(
+            List<TreeEntry> baseEntries,
+            List<TreeEntry> headEntries,
+            List<TreeEntry> targetEntries
+        )
+        {
+            var mergedEntries = new List<TreeEntry>();
+
+            var allNames = baseEntries.Select(e => e.Name)
+                .Union(headEntries.Select(e => e.Name))
+                .Union(targetEntries.Select(e => e.Name));
+
+            foreach (var name in allNames)
+            {
+                var baseEntry = baseEntries.FirstOrDefault(e => e.Name == name);
+                var headEntry = headEntries.FirstOrDefault(e => e.Name == name);
+                var targetEntry = targetEntries.FirstOrDefault(e => e.Name == name);
+
+                if (baseEntry == null && headEntry == null && targetEntry != null)
+                {
+                    mergedEntries.Add(targetEntry);
+                    continue;
+                }
+
+                if (baseEntry == null && targetEntry == null && headEntry != null)
+                {
+                    mergedEntries.Add(headEntry);
+                    continue;
+                }
+
+                if (headEntry == null && targetEntry == null && baseEntry != null)
                 {
                     continue;
                 }
 
-                if ((headSha1 == ancestralSha1) && (alvoSha1 != ancestralSha1))
+                if (headEntry != null && targetEntry != null)
                 {
-                    addedOrUpdatedFiles.Add(Path.Combine(Directory.GetCurrentDirectory(), file), alvoSha1);
+                    if (headEntry.Mode.StartsWith("040") || targetEntry.Mode.StartsWith("040"))
+                    {
+                        var headSubtree = headEntry != null ? TreeUtils.GetTreeData(headEntry.Sha1) : new List<TreeEntry>();
+                        var targetSubtree = targetEntry != null ? TreeUtils.GetTreeData(targetEntry.Sha1) : new List<TreeEntry>();
+                        var baseSubtree = baseEntry != null ? TreeUtils.GetTreeData(baseEntry.Sha1) : new List<TreeEntry>();
+
+                        var mergedSubtree = BuildTreeFromDiffs(baseSubtree, headSubtree, targetSubtree);
+
+                        if (mergedSubtree.Any())
+                        {
+                            var newTreeSha1 = TreeObject.WriteTree(mergedSubtree);
+                            mergedEntries.Add(new TreeEntry
+                            {
+                                Mode = "040000",
+                                Name = name,
+                                Sha1 = newTreeSha1
+                            });
+                        }
+
+                        continue;
+                    }
+
+                    if (headEntry.Sha1 == targetEntry.Sha1)
+                    {
+                        mergedEntries.Add(headEntry);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Conflito detectado no arquivo {name}");
+                        return new List<TreeEntry>();
+                    }
 
                     continue;
                 }
-
-                if ((alvoSha1 == ancestralSha1) && (headSha1 != ancestralSha1))
-                {
-                    continue;
-                }
-
-                if (!string.IsNullOrWhiteSpace(ancestralSha1) &&
-                    (headSha1 != ancestralSha1) &&
-                    (alvoSha1 != ancestralSha1) &&
-                    (headSha1 != alvoSha1))
-                {
-                    Console.WriteLine($"Ocorreu um conflito no arquivo: {file}");
-                    return;
-                }
-
-                if (string.IsNullOrWhiteSpace(ancestralSha1))
-                {
-                    if (!string.IsNullOrWhiteSpace(headSha1) && string.IsNullOrWhiteSpace(alvoSha1))
-                    {
-                        continue;
-                    }
-
-                    if (!string.IsNullOrWhiteSpace(alvoSha1) && string.IsNullOrWhiteSpace(headSha1))
-                    {
-                        addedOrUpdatedFiles.Add(Path.Combine(Directory.GetCurrentDirectory(), file), alvoSha1);
-
-                        continue;
-                    }
-                }
-
-                if (!string.IsNullOrWhiteSpace(ancestralSha1))
-                {
-                    if (string.IsNullOrWhiteSpace(headSha1) && string.IsNullOrWhiteSpace(alvoSha1))
-                    {
-                        continue;
-                    }
-                    
-                    if (string.IsNullOrWhiteSpace(headSha1) && alvoSha1 == ancestralSha1)
-                    {
-                        continue;
-                    }
-
-                    if (string.IsNullOrWhiteSpace(alvoSha1) && headSha1 == ancestralSha1)
-                    {
-                        removedFiles.Add(Path.Combine(Directory.GetCurrentDirectory(), file), alvoSha1);
-                    }
-                }
             }
 
-            foreach (var file in addedOrUpdatedFiles.Keys)
-            {
-                AddOrUpdateIndexFile(file, addedOrUpdatedFiles[file]);
-                Sha1Utils.WriteFileAndDirectoriesFromSha1(file, addedOrUpdatedFiles[file]);
-            }
-
-            foreach (var file in removedFiles.Keys)
-            {
-                RemoveIndexFile(file);
-                File.Delete(file);
-            }
-
-            var rootSha1= TreeObject.WriteTree(mergedEntries);
-
-            BranchUtils.CreateOrUpdateBranch(headBranch.Replace("ref: ", string.Empty), headTarget!);
+            return mergedEntries;
         }
 
         public static void AddOrUpdateIndexFile(string file, string sha1)
