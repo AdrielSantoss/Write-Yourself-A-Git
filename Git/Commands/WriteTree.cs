@@ -1,5 +1,6 @@
 ﻿using Csharp.Core;
 using Git.Core;
+using static Git.Core.TreeUtils;
 
 namespace Csharp.Commands
 {

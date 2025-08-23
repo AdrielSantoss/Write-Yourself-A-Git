@@ -1,15 +1,9 @@
 ﻿using Git.Core;
 using System.Text;
+using static Git.Core.TreeUtils;
 
 namespace Csharp.Core
 {
-    public class TreeEntry
-    {
-        public required string Mode { get; set; }
-        public required string Name { get; set; }
-        public required string Sha1 { get; set; }
-    }
-
     public class TreeObject
     {
         public static string WriteTree(List<TreeEntry> entries)

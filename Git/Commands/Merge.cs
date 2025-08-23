@@ -1,5 +1,7 @@
 ﻿using Csharp.Core;
 using Git.Core;
+using static Git.Core.TreeUtils;
+using TreeEntry = Git.Core.TreeUtils.TreeEntry;
 
 namespace Git.Commands
 {
