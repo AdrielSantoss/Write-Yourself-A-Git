@@ -72,11 +72,20 @@ namespace Git.Commands
                 TreeUtils.GetTreeEntriesFromSha1("", parentTreeSha1, baseFiles);
             }
 
-            foreach (var keyValue in indexMap)
+            var newFiles = baseFiles.Keys.Union(indexMap.Keys);
+
+            foreach (var file in newFiles)
             {
-                var relPath = keyValue.Key;
-                var blobSha1 = keyValue.Value;
-                baseFiles[relPath] = ("100644", blobSha1);
+                var stagedFileSha1 = indexMap.ContainsKey(file) ? indexMap[file] : null;
+                var baseFileSha1 = baseFiles.ContainsKey(file) ? baseFiles[file].Sha1 : null;
+
+                if (stagedFileSha1 == null && baseFileSha1 != null)
+                {
+                    baseFiles.Remove(file);
+                    continue;
+                }
+
+                baseFiles[file] = ("100644", stagedFileSha1!);
             }
 
             string WriteDir(string prefix)
