@@ -75,9 +75,11 @@ namespace Git.Commands
 
         private static string NormalizePath(string path)
         {
-            return path.Replace('/', Path.DirectorySeparatorChar)
-                       .Replace('\\', Path.DirectorySeparatorChar)
-                       .TrimEnd(Path.DirectorySeparatorChar);
+            var fullPath = Path.GetFullPath(path);
+            var repoRoot = Directory.GetParent(Path.Combine(Directory.GetCurrentDirectory(), ".gitadr"))!.FullName;
+            var relativePath = Path.GetRelativePath(repoRoot, fullPath);
+
+            return relativePath.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar).TrimEnd(Path.DirectorySeparatorChar);
         }
     }
 }
