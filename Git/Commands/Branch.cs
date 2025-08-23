@@ -23,6 +23,24 @@ namespace Git.Commands
 
             var branchName = args[0];
 
+            if (args.Length == 2 && args[0] == "-d") 
+            {
+                branchName = args[1];
+                var head = BranchUtils.GetHead().Replace(@$"ref: refs{Path.DirectorySeparatorChar}heads{Path.DirectorySeparatorChar}", string.Empty);
+
+                if (branchName == head)
+                {
+                    Console.WriteLine("Não é possivel excluir o HEAD.");
+
+                    return;
+                }
+
+                var gitDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
+                File.Delete(Path.Combine(gitDir, $"refs{Path.DirectorySeparatorChar}heads{Path.DirectorySeparatorChar}{branchName}"));
+
+                return;
+            }
+
             var existHeadFile = BranchUtils.GetCommitHeadFromBranch(branchName);
 
             if (existHeadFile != null)
