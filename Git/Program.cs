@@ -1,7 +1,6 @@
 ﻿using Csharp.Commands;
 using Git.Commands;
 
-
 if (args.Length == 0)
 {
     Console.WriteLine("Uso: dotnet run -- <comando_git>");
@@ -42,6 +41,10 @@ switch (args[0])
 
     case "rm":
         Rm.Execute(args[1..]);
+        break;
+
+    case "restore":
+        Restore.Execute(args[1..]);
         break;
 
     case "commit":
