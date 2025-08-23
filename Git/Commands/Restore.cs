@@ -32,28 +32,36 @@ namespace Git.Commands
                 }
 
                 Console.WriteLine("Workspace restaurada com sucesso a partir do HEAD.");
+                return;
             }
-            else if (Directory.Exists(target))
+
+            if (Directory.Exists(target))
             {
+                var directory = Path.GetDirectoryName(target);
+
                 foreach (var entry in headEntries)
                 {
-                    if (entry.Key.StartsWith(target))
+                    if (entry.Key.StartsWith(directory!))
                     {
                         Sha1Utils.WriteFileAndDirectoriesFromSha1(entry.Key, entry.Value.Sha1);
                     }
                 }
 
                 Console.WriteLine($"Diretório '{target}' restaurado com sucesso.");
+                return;
             }
-            else if (headEntries.ContainsKey(target))
+
+            var file = Path.GetFileName(target);
+
+            if (headEntries.ContainsKey(file))
             {
-                Sha1Utils.WriteFileAndDirectoriesFromSha1(target, headEntries[target].Sha1);
-                Console.WriteLine($"Arquivo '{target}' restaurado com sucesso.");
+                Sha1Utils.WriteFileAndDirectoriesFromSha1(target, headEntries[file].Sha1);
+                Console.WriteLine($"Arquivo '{file}' restaurado com sucesso.");
+
+                return;
             }
-            else
-            {
-                Console.WriteLine($"O caminho '{target}' não existe no último commit.");
-            }
+            
+            Console.WriteLine($"O caminho '{target}' não existe no último commit.");
         }
     }
 }
