@@ -7,7 +7,7 @@ if (args.Length == 0)
     return;
 }
 
-if (args[0] != "init" && !Directory.Exists(".gitadr"))
+if (args[0] != "init" && !ReadCurrentWorkingDirectory(Directory.GetCurrentDirectory()))
 {
     Console.WriteLine("GitAdr não inicializado.");
     return;
@@ -74,4 +74,26 @@ switch (args[0])
     default:
         Console.WriteLine($"Comando desconhecido: {args[0]}");
         break;
+}
+
+static bool ReadCurrentWorkingDirectory(string directory)
+{
+    if (Directory.Exists(directory))
+    {
+        if (Directory.Exists(Path.Combine(directory, ".gitadr"))) 
+        {
+            Directory.SetCurrentDirectory(directory);
+            return true;
+        }
+
+        var dirs = directory.Split(Path.DirectorySeparatorChar);
+        var taked = dirs.Take(dirs.Length - 1).ToArray();
+
+        if (taked.Length > 0)
+        {
+            return ReadCurrentWorkingDirectory(string.Join(Path.DirectorySeparatorChar, taked));
+        }
+    }
+
+    return false;
 }
