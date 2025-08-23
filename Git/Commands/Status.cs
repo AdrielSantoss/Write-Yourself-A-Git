@@ -7,8 +7,8 @@ namespace Git.Commands
     {
         public static void Execute()
         {
-            var headFileContent = BranchUtils.GetHead();
-            Console.WriteLine(headFileContent.Replace(@$"ref: refs{Path.DirectorySeparatorChar}heads{Path.DirectorySeparatorChar}", "On branch ") + "\n");
+            var head = BranchUtils.GetHead();
+            Console.WriteLine(head.Replace(@$"ref: refs{Path.DirectorySeparatorChar}heads{Path.DirectorySeparatorChar}", "On branch ") + "\n");
 
             ExecuteRecursive(Directory.GetCurrentDirectory());
         }

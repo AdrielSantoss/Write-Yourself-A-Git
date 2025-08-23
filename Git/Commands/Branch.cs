@@ -8,7 +8,16 @@ namespace Git.Commands
         {
             if (args.Length < 1)
             {
-                Console.WriteLine("Uso: gitadr branch <branch>");
+                var gitDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
+                var branchs = Directory.GetFiles(Path.Combine(gitDir, $"refs{Path.DirectorySeparatorChar}heads"));
+                var head = BranchUtils.GetHead().Replace(@$"ref: refs{Path.DirectorySeparatorChar}heads{Path.DirectorySeparatorChar}", string.Empty);
+
+                foreach (var branch in branchs)
+                {
+                    var name = Path.GetFileName(branch);
+                    Console.WriteLine($"{(name == head ? "*" : string.Empty)} {name}");
+                }
+
                 return;
             }
 

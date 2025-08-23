@@ -24,7 +24,7 @@ namespace Git.Core
         public static string? GetCommitHeadFromBranch(string branchFileName)
         {
             var gitDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
-            var path = Path.Combine(gitDir, "refs/heads", branchFileName);
+            var path = Path.Combine(gitDir, $"refs{Path.DirectorySeparatorChar}heads", branchFileName);
 
             if (!File.Exists(path))
             {
