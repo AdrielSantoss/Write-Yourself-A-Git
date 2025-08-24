@@ -177,6 +177,32 @@ namespace Git.Commands
             {
                 if (entry.Mode.StartsWith("040"))
                 {
+                    var subEntries = TreeUtils.GetTreeData(entry.Sha1);
+
+                    foreach (var subEntry in subEntries)
+                    {
+                        var fullPath = Path.Combine(entry.Name, subEntry.Name);
+
+                        if (subEntry.Mode.StartsWith("040"))
+                        {
+                            UpdateIndexAndWorkSpaceFromTree(
+                                new List<TreeEntry> {
+                                    new TreeEntry {
+                                        Mode = subEntry.Mode,
+                                        Name = fullPath,
+                                        Sha1 = subEntry.Sha1
+                                    }
+                                }
+                            );
+                        }
+                        else
+                        {
+                            AddOrUpdateIndexFile(fullPath, subEntry.Sha1);
+                            survivingFiles.Add(fullPath);
+                            Sha1Utils.WriteFileAndDirectoriesFromSha1(fullPath, subEntry.Sha1);
+                        }
+                    }
+
                     continue;
                 }
 

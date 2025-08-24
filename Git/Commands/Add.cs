@@ -29,13 +29,13 @@ namespace Git.Commands
 
             if (!File.Exists(fileOrDirectory) && Directory.Exists(fileOrDirectory)) 
             {
-                ExecuteRecursive(Path.GetDirectoryName(fileOrDirectory)!);
+                ExecuteRecursive(fileOrDirectory!);
                 return;
             }
 
             if (File.Exists(fileOrDirectory) && !Directory.Exists(fileOrDirectory))
             {
-                AddOrUpdateIndexFile(Path.GetFileName(fileOrDirectory));
+                AddOrUpdateIndexFile(Path.GetRelativePath(Directory.GetCurrentDirectory(), fileOrDirectory));
                 return;
             }
         }
@@ -44,17 +44,17 @@ namespace Git.Commands
         {
             foreach (var file in Directory.GetFiles(directory))
             {
-                if (CommitUtils.ignoreFiles.Any(ignore => file.Contains(ignore)))
+                if (CommitUtils.ignoreFiles.Any(ignoreFile => Path.GetFileName(file) == ignoreFile))
                 {
                     continue;
                 }
 
-                AddOrUpdateIndexFile(file);
+                AddOrUpdateIndexFile(Path.GetRelativePath(Directory.GetCurrentDirectory(), file));
             }
 
             foreach (var subdir in Directory.GetDirectories(directory))
             {
-                if (CommitUtils.ignoreFiles.Any(ignore => subdir.Contains(ignore)))
+                if (CommitUtils.ignoreFiles.Any(ignoreFile => Path.GetFileName(subdir) == ignoreFile))
                 {
                     continue;
                 }
