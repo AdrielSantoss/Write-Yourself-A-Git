@@ -22,8 +22,8 @@ namespace Git.Commands
                 return;
             }
 
-            var workSpaceEntries  = CommitUtils.RecursiveReadWorkSapce(Directory.GetCurrentDirectory(), new Dictionary<string, string>());
-            var indexEntries = CommitUtils.GetIndexEntries(false);
+            var workSpaceEntries  = IndexUtils.RecursiveReadWorkSapce(Directory.GetCurrentDirectory(), new Dictionary<string, string>());
+            var indexEntries = IndexUtils.GetIndexEntries(false);
 
             var targetBranchHead = BranchUtils.GetCommitHeadFromBranch(branchName);
             var targetBranchTreeSha1 = CommitUtils.GetCommitTreeSha1(targetBranchHead!);
@@ -62,8 +62,8 @@ namespace Git.Commands
             }
 
             var indexLines = new List<string>();
-               
-            CommitUtils.RecursiveUpdateIndexFromTree("", targetBranchTreeSha1, indexLines);
+
+            IndexUtils.RecursiveUpdateIndexFromTree("", targetBranchTreeSha1, indexLines);
 
             var fullNewWs = targetBranchEntries.Keys.Union(workSpaceEntries.Keys);
 
@@ -95,7 +95,7 @@ namespace Git.Commands
                 }
             }
 
-            CommitUtils.RemoveEmptyDirectories(Directory.GetCurrentDirectory());
+            IndexUtils.RemoveEmptyDirectories(Directory.GetCurrentDirectory());
 
             BranchUtils.WriteHead(@$"ref: refs\heads\{branchName}");
 

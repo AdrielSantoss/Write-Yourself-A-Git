@@ -1,6 +1,5 @@
 ﻿using Csharp.Core;
 using Git.Core;
-using System.Collections.Generic;
 using TreeEntry = Git.Core.TreeUtils.TreeEntry;
 
 namespace Git.Commands
@@ -50,7 +49,7 @@ namespace Git.Commands
                 return;
             }
 
-            var commitBase = targetCommits!.Intersect(headCommits!).First();
+            var commitBase = FindMergeBase(headCommits!, targetCommits!);
 
             var baseTreeSha1 = CommitUtils.GetCommitTreeSha1(commitBase);
             var baseEntries = TreeUtils.GetTreeData(baseTreeSha1);
@@ -91,7 +90,11 @@ namespace Git.Commands
                 RemoveFilesAndDirectories(survivingFiles);
 
                 var mergeRootSha1 = TreeObject.WriteTree(mergedEntries);
-                var mergeCommitSha1 = CommitObject.WriteCommit(mergeRootSha1, $"Merge branch {targetBranch} into {headBranch.Replace(@$"ref: refs{Path.DirectorySeparatorChar}heads{Path.DirectorySeparatorChar}", string.Empty)}", [headCommit, targetCommit]);
+                var mergeCommitSha1 = CommitObject.WriteCommit(
+                                        mergeRootSha1, 
+                                        $"Merge branch {targetBranch} into {headBranch.Replace(@$"ref: refs{Path.DirectorySeparatorChar}heads{Path.DirectorySeparatorChar}", string.Empty)}", 
+                                        [headCommit, targetCommit]
+                                    );
 
                 BranchUtils.CreateOrUpdateBranch(headBranch.Replace("ref: ", string.Empty), mergeCommitSha1);
             }
@@ -218,7 +221,7 @@ namespace Git.Commands
 
         private static void RemoveFilesAndDirectories(HashSet<string> survivingFiles)
         {
-            var currentIndex = CommitUtils.GetIndexEntries(true);
+            var currentIndex = IndexUtils.GetIndexEntries(true);
 
             foreach (var file in currentIndex.Keys)
             {
@@ -232,12 +235,12 @@ namespace Git.Commands
                 }
             }
 
-            CommitUtils.RemoveEmptyDirectories(Directory.GetCurrentDirectory());
+            IndexUtils.RemoveEmptyDirectories(Directory.GetCurrentDirectory());
         }
 
         private static void AddOrUpdateIndexFile(string file, string sha1)
         {
-            var lines = CommitUtils.GetIndexEntries(true);
+            var lines = IndexUtils.GetIndexEntries(true);
 
             var newContentLines = new List<string>();
             var found = false;
@@ -269,12 +272,12 @@ namespace Git.Commands
                 newContentLines.Add($"{sha1} {file}");
             }
 
-            CommitUtils.CreateOrUpdateIndex(string.Join('\n', newContentLines) + "\n");
+            IndexUtils.CreateOrUpdateIndex(string.Join('\n', newContentLines) + "\n");
         }
 
         private static void RemoveIndexFile(string file)
         {
-            var lines = CommitUtils.GetIndexEntries(true);
+            var lines = IndexUtils.GetIndexEntries(true);
             lines.Remove(file);
             var newContentLines = new List<string>();
 
@@ -283,7 +286,24 @@ namespace Git.Commands
                 newContentLines.Add($"{lines[fileName]} {fileName}");
             }
 
-            CommitUtils.CreateOrUpdateIndex(string.Join('\n', newContentLines) + "\n");
+            IndexUtils.CreateOrUpdateIndex(string.Join('\n', newContentLines) + "\n");
+        }
+
+        private static string FindMergeBase(List<string> headCommits, List<string> targetCommits)
+        {
+            foreach (var commitSha1 in headCommits)
+            {
+                var parents = CommitUtils.GetCommitParents(commitSha1);
+                if (parents.Count > 1)
+                {
+                    if (targetCommits.Contains(parents[1]))
+                    {
+                        return commitSha1;
+                    }
+                }
+            }
+
+            return headCommits.Intersect(targetCommits).First();
         }
     }
 }

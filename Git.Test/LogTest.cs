@@ -23,14 +23,14 @@ namespace Git.Test
             File.WriteAllText(fileName2, content2, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
 
             Add.Execute([fileName]);
-            var lines = CommitUtils.GetIndexEntries();
+            var lines = IndexUtils.GetIndexEntries();
             Assert.NotEmpty(lines);
 
             var commitSha1 = Commit.Execute(["-m", "Teste commit 1"]);
             Assert.True(!string.IsNullOrWhiteSpace(commitSha1));
 
             Add.Execute([fileName2]);
-            lines = CommitUtils.GetIndexEntries();
+            lines = IndexUtils.GetIndexEntries();
             Assert.NotEmpty(lines);
 
             var commit2Sha1 = Commit.Execute(["-m", "Teste commit 2"]);

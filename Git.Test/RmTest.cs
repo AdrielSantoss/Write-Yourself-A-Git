@@ -17,11 +17,11 @@ namespace Git.Test
             var sha1 = BlobUtils.GetSha1FromBlob(fileName);
 
             Add.Execute([fileName]);
-            var lines = CommitUtils.GetIndexEntries();
+            var lines = IndexUtils.GetIndexEntries();
             Assert.NotEmpty(lines);
 
             Rm.Execute([fileName]);
-            lines = CommitUtils.GetIndexEntries();
+            lines = IndexUtils.GetIndexEntries();
             Assert.Empty(lines);
         }
     }

@@ -61,7 +61,7 @@ namespace Git.Commands
                 return;
             }
 
-            CommitUtils.CreateOrUpdateIndex(string.Join('\n', newContentLines) + "\n");
+            IndexUtils.CreateOrUpdateIndex(string.Join('\n', newContentLines) + "\n");
 
             if (removedEntries.Count == 1)
             {

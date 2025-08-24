@@ -17,7 +17,7 @@ namespace Git.Test
 
             Add.Execute([fileName]);
 
-            var indexEntries = CommitUtils.GetIndexEntries();
+            var indexEntries = IndexUtils.GetIndexEntries();
 
             Assert.NotEmpty(indexEntries);
             Assert.Contains(fileName, indexEntries.Keys);

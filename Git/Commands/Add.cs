@@ -44,7 +44,7 @@ namespace Git.Commands
         {
             foreach (var file in Directory.GetFiles(directory))
             {
-                if (CommitUtils.ignoreFiles.Any(ignoreFile => Path.GetFileName(file) == ignoreFile))
+                if (IndexUtils.ignoreFiles.Any(ignoreFile => Path.GetFileName(file) == ignoreFile))
                 {
                     continue;
                 }
@@ -54,7 +54,7 @@ namespace Git.Commands
 
             foreach (var subdir in Directory.GetDirectories(directory))
             {
-                if (CommitUtils.ignoreFiles.Any(ignoreFile => Path.GetFileName(subdir) == ignoreFile))
+                if (IndexUtils.ignoreFiles.Any(ignoreFile => Path.GetFileName(subdir) == ignoreFile))
                 {
                     continue;
                 }
@@ -67,7 +67,7 @@ namespace Git.Commands
         {
             var sha1 = HashObject.Execute(new string[] { "-w", file });
 
-            var lines = CommitUtils.GetIndexEntries(true);
+            var lines = IndexUtils.GetIndexEntries(true);
 
             var newContentLines = new List<string>();
             var found = false;
@@ -100,7 +100,7 @@ namespace Git.Commands
                 newContentLines.Add($"{sha1} {file}");
             }
 
-            CommitUtils.CreateOrUpdateIndex(string.Join('\n', newContentLines) + "\n");
+            IndexUtils.CreateOrUpdateIndex(string.Join('\n', newContentLines) + "\n");
         }
     }
 }

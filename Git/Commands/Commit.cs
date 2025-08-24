@@ -14,7 +14,7 @@ namespace Git.Commands
                 return string.Empty;
             }
 
-            var indexEntries = CommitUtils.GetIndexEntries(false);
+            var indexEntries = IndexUtils.GetIndexEntries(false);
 
             if (indexEntries == null || indexEntries.Keys.Count == 0)
             {

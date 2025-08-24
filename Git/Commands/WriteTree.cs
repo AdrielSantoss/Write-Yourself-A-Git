@@ -17,7 +17,7 @@ namespace Csharp.Commands
 
             foreach (var file in Directory.GetFiles(directory))
             {
-                if (CommitUtils.ignoreFiles.Any(ignoreFile => Path.GetFileName(file) == ignoreFile))
+                if (IndexUtils.ignoreFiles.Any(ignoreFile => Path.GetFileName(file) == ignoreFile))
                 {
                     continue;
                 }
@@ -35,7 +35,7 @@ namespace Csharp.Commands
 
             foreach (var subdir in Directory.GetDirectories(directory))
             {
-                if (CommitUtils.ignoreFiles.Any(ignoreFile => Path.GetFileName(subdir) == ignoreFile))
+                if (IndexUtils.ignoreFiles.Any(ignoreFile => Path.GetFileName(subdir) == ignoreFile))
                 {
                     continue;
                 }
