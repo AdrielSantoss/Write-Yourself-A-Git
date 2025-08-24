@@ -12,56 +12,71 @@ namespace Git.Commands
                 return;
             }
 
-            var target = args[0];
-
-            var headCommit = CommitUtils.GetLastCommitSha1FromHead();
-            if (headCommit == null)
+            if (CommitUtils.GetLastCommitSha1FromHead() == null)
             {
                 Console.WriteLine("Nenhum commit encontrado para restaurar.");
                 return;
             }
 
-            var headTreeSha1 = CommitUtils.GetCommitTreeSha1(headCommit);
-            var headEntries = TreeUtils.GetTreeEntriesFromSha1("", headTreeSha1, new Dictionary<string, (string Mode, string Sha1)>());
+            var target = args[0];
+            var indexLines = IndexUtils.GetIndexEntries();
 
             if (target == ".")
             {
-                foreach (var entry in headEntries)
-                {
-                    Sha1Utils.WriteFileAndDirectoriesFromSha1(entry.Key, entry.Value.Sha1);
-                }
-
+                ExecuteRercusive(Directory.GetCurrentDirectory(), indexLines);
                 Console.WriteLine("Workspace restaurada com sucesso a partir do HEAD.");
+
                 return;
             }
+
+            target = Path.GetRelativePath(Directory.GetCurrentDirectory(), target);
 
             if (Directory.Exists(target))
             {
-                var directory = Path.GetDirectoryName(target);
-
-                foreach (var entry in headEntries)
-                {
-                    if (entry.Key.StartsWith(directory!))
-                    {
-                        Sha1Utils.WriteFileAndDirectoriesFromSha1(entry.Key, entry.Value.Sha1);
-                    }
-                }
-
+                ExecuteRercusive(target, indexLines);
                 Console.WriteLine($"Diretório '{target}' restaurado com sucesso.");
+
                 return;
             }
 
-            var file = Path.GetFileName(target);
-
-            if (headEntries.ContainsKey(file))
+            if (File.Exists(target) && indexLines.ContainsKey(target))
             {
-                Sha1Utils.WriteFileAndDirectoriesFromSha1(target, headEntries[file].Sha1);
-                Console.WriteLine($"Arquivo '{file}' restaurado com sucesso.");
+                Sha1Utils.WriteFileAndDirectoriesFromSha1(target, indexLines[target]);
+                Console.WriteLine($"Arquivo '{target}' restaurado com sucesso.");
 
                 return;
-            }
+            }   
             
             Console.WriteLine($"O caminho '{target}' não existe no último commit.");
+        }
+
+        public static void ExecuteRercusive(string directory, Dictionary<string, string> indexLines)
+        {
+            foreach (var wsFile in Directory.GetFiles(directory))
+            {
+                var file = Path.GetRelativePath(Directory.GetCurrentDirectory(), wsFile);
+                if (IndexUtils.ignoreFiles.Any(ignoreFile => Path.GetFileName(file) == ignoreFile))
+                {
+                    continue;
+                }
+
+                var indexFileSha1 = indexLines.ContainsKey(file) ? indexLines[file] : null;
+
+                if (indexFileSha1 != null) 
+                {
+                    Sha1Utils.WriteFileAndDirectoriesFromSha1(file, indexFileSha1);
+                }
+            }
+
+            foreach (var wsDirectory in Directory.GetDirectories(directory))
+            {
+                if (IndexUtils.ignoreFiles.Any(ignoreFile => Path.GetFileName(wsDirectory) == ignoreFile))
+                {
+                    continue;
+                }
+
+                ExecuteRercusive(Path.Combine(directory, wsDirectory), indexLines);
+            }
         }
     }
 }
