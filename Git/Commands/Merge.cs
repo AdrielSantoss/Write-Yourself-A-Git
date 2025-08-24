@@ -1,5 +1,6 @@
 ﻿using Csharp.Core;
 using Git.Core;
+using System.Collections.Generic;
 using TreeEntry = Git.Core.TreeUtils.TreeEntry;
 
 namespace Git.Commands
@@ -72,7 +73,9 @@ namespace Git.Commands
                     return;
                 }
 
-                UpdateIndexAndWorkSpaceFromTree(targetEntries);
+                var survivingFiles = new HashSet<string>();
+                UpdateIndexAndWorkSpaceFromTree(targetEntries, survivingFiles);
+                RemoveFilesAndDirectories(survivingFiles);
 
                 BranchUtils.CreateOrUpdateBranch(headBranch.Replace("ref: ", string.Empty), targetCommit);
                 Console.WriteLine($"Fast-forward merge realizado para {targetBranch}");
@@ -83,7 +86,9 @@ namespace Git.Commands
 
             if (mergedEntries.Count > 0)
             {
-                UpdateIndexAndWorkSpaceFromTree(mergedEntries);
+                var survivingFiles = new HashSet<string>();
+                UpdateIndexAndWorkSpaceFromTree(mergedEntries, survivingFiles);
+                RemoveFilesAndDirectories(survivingFiles);
 
                 var mergeRootSha1 = TreeObject.WriteTree(mergedEntries);
                 var mergeCommitSha1 = CommitObject.WriteCommit(mergeRootSha1, $"Merge branch {targetBranch} into {headBranch.Replace(@$"ref: refs{Path.DirectorySeparatorChar}heads{Path.DirectorySeparatorChar}", string.Empty)}", [headCommit, targetCommit]);
@@ -168,11 +173,8 @@ namespace Git.Commands
             return mergedEntries;
         }
 
-        private static void UpdateIndexAndWorkSpaceFromTree(List<TreeEntry> treeData)
+        private static void UpdateIndexAndWorkSpaceFromTree(List<TreeEntry> treeData, HashSet<string> survivingFiles)
         {
-            var currentIndex = CommitUtils.GetIndexEntries(true);
-            var survivingFiles = new HashSet<string>();
-
             foreach (var entry in treeData)
             {
                 if (entry.Mode.StartsWith("040"))
@@ -192,7 +194,8 @@ namespace Git.Commands
                                         Name = fullPath,
                                         Sha1 = subEntry.Sha1
                                     }
-                                }
+                                },
+                                survivingFiles
                             );
                         }
                         else
@@ -211,6 +214,11 @@ namespace Git.Commands
 
                 Sha1Utils.WriteFileAndDirectoriesFromSha1(entry.Name, entry.Sha1);
             }
+        }
+
+        private static void RemoveFilesAndDirectories(HashSet<string> survivingFiles)
+        {
+            var currentIndex = CommitUtils.GetIndexEntries(true);
 
             foreach (var file in currentIndex.Keys)
             {
