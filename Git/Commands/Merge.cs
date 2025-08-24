@@ -24,7 +24,7 @@ namespace Git.Commands
             }
             else
             {
-                targetBranch = args[1];
+                targetBranch = args[0];
             }
 
             var targetCommit = BranchUtils.GetCommitHeadFromBranch(targetBranch);
@@ -49,33 +49,6 @@ namespace Git.Commands
                 return;
             }
 
-            var canFastForward = headCommits!.All(c => targetCommits!.Contains(c));
-
-            if (canFastForward)
-            {
-                var indexLines = new List<string>();
-
-                CommitUtils.RecursiveUpdateIndexFromTree("", targetTreeSha1, indexLines);
-
-                foreach (var entry in TreeUtils.GetTreeData(targetTreeSha1))
-                {
-                    if (!entry.Mode.StartsWith("040"))
-                    {
-                        Sha1Utils.WriteFileAndDirectoriesFromSha1(entry.Name, entry.Sha1);
-                    }
-                }
-
-                BranchUtils.CreateOrUpdateBranch(headBranch.Replace("ref: ", string.Empty), targetCommit);
-                Console.WriteLine($"Fast-forward merge realizado para {targetBranch}");
-                return;
-            }
-
-            if (ffOnly)
-            {
-                Console.WriteLine($"Não é possível realizar fast-forward merge para {targetBranch}, abortando.");
-                return;
-            }
-
             var commitBase = targetCommits!.Intersect(headCommits!).First();
 
             var baseTreeSha1 = CommitUtils.GetCommitTreeSha1(commitBase);
@@ -89,47 +62,37 @@ namespace Git.Commands
             var addedOrUpdatedFiles = new Dictionary<string, string>();
             var removedFiles = new Dictionary<string, string>();
 
-            var mergedEntries = BuildTreeFromDiffs(baseEntries, headEntries, targetEntries);
+            if (ffOnly)
+            {
+                var canFastForward = headCommits!.All(c => targetCommits!.Contains(c));
+
+                if (!canFastForward)
+                {
+                    Console.WriteLine($"Não é possível realizar fast-forward merge para {targetBranch}, abortando.");
+                    return;
+                }
+
+                UpdateIndexAndWorkSpaceFromTree(targetEntries);
+
+                BranchUtils.CreateOrUpdateBranch(headBranch.Replace("ref: ", string.Empty), targetCommit);
+                Console.WriteLine($"Fast-forward merge realizado para {targetBranch}");
+                return;
+            }
+
+            var mergedEntries = BuildTreeFromTwoTreeDiffs(baseEntries, headEntries, targetEntries);
 
             if (mergedEntries.Count > 0)
             {
-                var currentIndex = CommitUtils.GetIndexEntries(true);
+                UpdateIndexAndWorkSpaceFromTree(mergedEntries);
 
-                var survivingFiles = new HashSet<string>();
+                var mergeRootSha1 = TreeObject.WriteTree(mergedEntries);
+                var mergeCommitSha1 = CommitObject.WriteCommit(mergeRootSha1, $"Merge branch {targetBranch} into {headBranch.Replace("ref: ", string.Empty)}", [headCommit, targetCommit]);
 
-                foreach (var entry in mergedEntries)
-                {
-                    if (entry.Mode.StartsWith("040"))
-                    {
-                        continue;
-                    }
-
-                    AddOrUpdateIndexFile(entry.Name, entry.Sha1);
-                    survivingFiles.Add(entry.Name);
-
-                    Sha1Utils.WriteFileAndDirectoriesFromSha1(entry.Name, entry.Sha1);
-                }
-
-                foreach (var file in currentIndex.Keys)
-                {
-                    if (!survivingFiles.Contains(file))
-                    {
-                        RemoveIndexFile(file);
-                        if (File.Exists(file))
-                            File.Delete(file);
-                    }
-                }
-
-                var rootSha1 = TreeObject.WriteTree(mergedEntries);
-
-                BranchUtils.CreateOrUpdateBranch(
-                    headBranch.Replace("ref: ", string.Empty),
-                    targetCommit!
-                );
+                BranchUtils.CreateOrUpdateBranch(headBranch.Replace("ref: ", string.Empty), mergeCommitSha1);
             }
         }
 
-        public static List<TreeEntry> BuildTreeFromDiffs(
+        public static List<TreeEntry> BuildTreeFromTwoTreeDiffs(
             List<TreeEntry> baseEntries,
             List<TreeEntry> headEntries,
             List<TreeEntry> targetEntries
@@ -172,7 +135,7 @@ namespace Git.Commands
                         var targetSubtree = targetEntry != null ? TreeUtils.GetTreeData(targetEntry.Sha1) : new List<TreeEntry>();
                         var baseSubtree = baseEntry != null ? TreeUtils.GetTreeData(baseEntry.Sha1) : new List<TreeEntry>();
 
-                        var mergedSubtree = BuildTreeFromDiffs(baseSubtree, headSubtree, targetSubtree);
+                        var mergedSubtree = BuildTreeFromTwoTreeDiffs(baseSubtree, headSubtree, targetSubtree);
 
                         if (mergedSubtree.Any())
                         {
@@ -205,7 +168,38 @@ namespace Git.Commands
             return mergedEntries;
         }
 
-        public static void AddOrUpdateIndexFile(string file, string sha1)
+        private static void UpdateIndexAndWorkSpaceFromTree(List<TreeEntry> treeData)
+        {
+            var currentIndex = CommitUtils.GetIndexEntries(true);
+            var survivingFiles = new HashSet<string>();
+
+            foreach (var entry in treeData)
+            {
+                if (entry.Mode.StartsWith("040"))
+                {
+                    continue;
+                }
+
+                AddOrUpdateIndexFile(entry.Name, entry.Sha1);
+                survivingFiles.Add(entry.Name);
+
+                Sha1Utils.WriteFileAndDirectoriesFromSha1(entry.Name, entry.Sha1);
+            }
+
+            foreach (var file in currentIndex.Keys)
+            {
+                if (!survivingFiles.Contains(file))
+                {
+                    RemoveIndexFile(file);
+                    if (File.Exists(file))
+                    {
+                        File.Delete(file);
+                    }
+                }
+            }
+        }
+
+        private static void AddOrUpdateIndexFile(string file, string sha1)
         {
             var lines = CommitUtils.GetIndexEntries(true);
 
@@ -242,7 +236,7 @@ namespace Git.Commands
             CommitUtils.CreateOrUpdateIndex(string.Join('\n', newContentLines) + "\n");
         }
 
-        public static void RemoveIndexFile(string file)
+        private static void RemoveIndexFile(string file)
         {
             var lines = CommitUtils.GetIndexEntries(true);
             lines.Remove(file);

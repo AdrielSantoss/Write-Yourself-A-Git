@@ -136,5 +136,14 @@ namespace Git.Core
 
             return indexLines;
         }
+
+        public static string NormalizePath(string path)
+        {
+            var fullPath = Path.GetFullPath(path);
+            var repoRoot = Directory.GetParent(Path.Combine(Directory.GetCurrentDirectory(), ".gitadr"))!.FullName;
+            var relativePath = Path.GetRelativePath(repoRoot, fullPath);
+
+            return relativePath.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar).TrimEnd(Path.DirectorySeparatorChar);
+        }
     }
 }

@@ -5,24 +5,41 @@ namespace Git.Core
 {
     public class CommitObject
     {
-        public static string WriteCommit(string rootSha1, string msg)
+        public static string WriteCommit(string rootSha1, string msg, string[]? sha1Parents = null)
         {
             using var commitStream = new MemoryStream();
 
             var tree = Encoding.UTF8.GetBytes($"tree {rootSha1}\n");
 
-            var parentSah1 = CommitUtils.GetLastCommitSha1FromHead();
-            var parent = !string.IsNullOrWhiteSpace(parentSah1) ? Encoding.UTF8.GetBytes($"parent {parentSah1}\n") : null;
+            var parents = new List<byte[]>();
+
+            if (sha1Parents != null) 
+            {
+                foreach (var sha1 in sha1Parents)
+                {
+                    parents.Add(Encoding.UTF8.GetBytes($"parent {sha1}\n"));
+                }
+            }
+            else
+            {
+                var parentSah1 = CommitUtils.GetLastCommitSha1FromHead();
+               
+                if (!string.IsNullOrWhiteSpace(parentSah1))
+                {
+                    parents.Add(Encoding.UTF8.GetBytes($"parent {parentSah1}\n"));
+                }
+            }
+
             var author = Encoding.UTF8.GetBytes($"author Guest <author@gmail.com> {CommitUtils.GetTimestamp()} {CommitUtils.GetTimezone()}\n");
             var committer = Encoding.UTF8.GetBytes($"committer Guest <commiter@email.com> {CommitUtils.GetTimestamp()} {CommitUtils.GetTimezone()}\n");
             var message = Encoding.UTF8.GetBytes($"{msg}\n");
 
             commitStream.Write(tree, 0, tree.Length);
 
-            if (parent is not null)
+            foreach(var parent in parents)
             {
                 commitStream.Write(parent, 0, parent.Length);
-            }
+            }  
 
             commitStream.Write(author, 0, author.Length);
             commitStream.Write(committer, 0, committer.Length);

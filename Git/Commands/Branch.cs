@@ -51,7 +51,7 @@ namespace Git.Commands
 
             var lastCommitSha1 = CommitUtils.GetLastCommitSha1FromHead();
 
-            BranchUtils.CreateOrUpdateBranch($"refs/heads/{branchName}", lastCommitSha1);
+            BranchUtils.CreateOrUpdateBranch($"refs{Path.DirectorySeparatorChar}heads{Path.DirectorySeparatorChar}{branchName}", lastCommitSha1);
 
             Console.WriteLine($"Branch {branchName} criado com sucesso");
         }

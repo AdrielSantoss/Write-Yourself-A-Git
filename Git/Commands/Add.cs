@@ -29,13 +29,13 @@ namespace Git.Commands
 
             if (!File.Exists(fileOrDirectory) && Directory.Exists(fileOrDirectory)) 
             {
-                ExecuteRecursive(fileOrDirectory);
+                ExecuteRecursive(Path.GetDirectoryName(fileOrDirectory)!);
                 return;
             }
 
             if (File.Exists(fileOrDirectory) && !Directory.Exists(fileOrDirectory))
             {
-                AddOrUpdateIndexFile(fileOrDirectory);
+                AddOrUpdateIndexFile(Path.GetFileName(fileOrDirectory));
                 return;
             }
         }
