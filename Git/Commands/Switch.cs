@@ -22,7 +22,7 @@ namespace Git.Commands
                 return;
             }
 
-            var workSpaceEntries  = CommitUtils.RecursiveReadWorkSapce(Directory.GetCurrentDirectory());
+            var workSpaceEntries  = CommitUtils.RecursiveReadWorkSapce(Directory.GetCurrentDirectory(), new Dictionary<string, string>());
             var indexEntries = CommitUtils.GetIndexEntries(false);
 
             var targetBranchHead = BranchUtils.GetCommitHeadFromBranch(branchName);

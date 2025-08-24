@@ -86,7 +86,7 @@ namespace Git.Commands
                 UpdateIndexAndWorkSpaceFromTree(mergedEntries);
 
                 var mergeRootSha1 = TreeObject.WriteTree(mergedEntries);
-                var mergeCommitSha1 = CommitObject.WriteCommit(mergeRootSha1, $"Merge branch {targetBranch} into {headBranch.Replace("ref: ", string.Empty)}", [headCommit, targetCommit]);
+                var mergeCommitSha1 = CommitObject.WriteCommit(mergeRootSha1, $"Merge branch {targetBranch} into {headBranch.Replace(@$"ref: refs{Path.DirectorySeparatorChar}heads{Path.DirectorySeparatorChar}", string.Empty)}", [headCommit, targetCommit]);
 
                 BranchUtils.CreateOrUpdateBranch(headBranch.Replace("ref: ", string.Empty), mergeCommitSha1);
             }

@@ -87,12 +87,11 @@ namespace Git.Core
             File.WriteAllText(path, contenet);
         }
 
-        public static Dictionary<string, string> RecursiveReadWorkSapce(string dir)
+        public static Dictionary<string, string> RecursiveReadWorkSapce(string dir, Dictionary<string, string> dict)
         {
-            var dict = new Dictionary<string, string>();
             foreach (var entry in Directory.GetFiles(dir))
             {
-                if (ignoreFiles.Any(ignore => entry.Contains(ignore)))
+                if (ignoreFiles.Any(ignoreFile => Path.GetFileName(entry) == ignoreFile))
                 {
                     continue;
                 }
@@ -103,12 +102,12 @@ namespace Git.Core
 
             foreach (var entry in Directory.GetDirectories(dir))
             {
-                if (ignoreFiles.Any(ignore => entry.Contains(ignore)))
+                if (ignoreFiles.Any(ignoreDir => Path.GetFileName(entry) == ignoreDir))
                 {
                     continue;
                 }
 
-                RecursiveReadWorkSapce(entry);
+                RecursiveReadWorkSapce(entry, dict);
             }
 
             return dict;

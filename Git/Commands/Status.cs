@@ -14,7 +14,7 @@ namespace Git.Commands
 
         public static void ExecuteRecursive(string directory)
         {
-            var worksSpaceFiles =  CommitUtils.RecursiveReadWorkSapce(Directory.GetCurrentDirectory());
+            var worksSpaceFiles =  CommitUtils.RecursiveReadWorkSapce(Directory.GetCurrentDirectory(), new Dictionary<string, string>());
 
             var commitHead = CommitUtils.GetLastCommitSha1FromHead();
             var headFiles = new Dictionary<string, (string Mode, string Sha1)>();
