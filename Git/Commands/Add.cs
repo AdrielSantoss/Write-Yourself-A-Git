@@ -14,6 +14,7 @@ namespace Git.Commands
             }
 
             var fileOrDirectory = args[0];
+            var indexLines = IndexUtils.GetIndexEntries(true);
 
             if (fileOrDirectory == ".")
             {
@@ -81,7 +82,6 @@ namespace Git.Commands
                     found = true;
                     if (fileSha1 == sha1)
                     {
-                        Console.WriteLine($"{file} já está inserido na staging area.");
                         return;
                     }
                     else

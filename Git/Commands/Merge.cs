@@ -93,8 +93,7 @@ namespace Git.Commands
                 var mergeCommitSha1 = CommitObject.WriteCommit(
                                         mergeRootSha1, 
                                         $"Merge branch {targetBranch} into {headBranch.Replace(@$"ref: refs{Path.DirectorySeparatorChar}heads{Path.DirectorySeparatorChar}", string.Empty)}", 
-                                        [headCommit, targetCommit]
-                                    );
+                                        [headCommit, targetCommit]);
 
                 BranchUtils.CreateOrUpdateBranch(headBranch.Replace("ref: ", string.Empty), mergeCommitSha1);
             }
@@ -157,6 +156,11 @@ namespace Git.Commands
                         }
 
                         continue;
+                    }
+
+                    if (baseEntry.Sha1 == headEntry.Sha1 && headEntry.Sha1 == targetEntry.Sha1)
+                    {
+                        mergedEntries.Add(targetEntry);
                     }
 
                     if (baseEntry.Sha1 == headEntry.Sha1 && headEntry.Sha1 != targetEntry.Sha1)

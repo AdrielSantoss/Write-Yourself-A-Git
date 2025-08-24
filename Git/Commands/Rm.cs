@@ -21,65 +21,43 @@ namespace Git.Commands
                 return;
             }
 
-            var target = NormalizePath(args[0]);
-            var content = File.ReadAllText(pathIndex);
-            var lines = string.IsNullOrWhiteSpace(content)
-                ? Array.Empty<string>()
-                : content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            var target = Path.GetRelativePath(Directory.GetCurrentDirectory(), args[0]);
 
-            var newContentLines = new List<string>();
-            var removedEntries = new List<string>();
+            var indexLines = IndexUtils.GetIndexEntries();
 
-            foreach (var line in lines)
-            {
-                var parts = line.Split(' ', 2);
-                if (parts.Length != 2)
-                {
-                    continue;
-                }
+            var removingEntries = indexLines.Keys.Where(index =>
+                index == target ||
+                index.StartsWith($"{target + Path.DirectorySeparatorChar}") 
+            ).ToList();
 
-                var fileName = NormalizePath(parts[1]);
-
-                if (fileName == target)
-                {
-                    removedEntries.Add(fileName);
-                    continue;
-                }
-
-                if (Directory.Exists(target) && fileName.StartsWith(target + Path.DirectorySeparatorChar))
-                {
-                    removedEntries.Add(fileName);
-                    continue;
-                }
-
-                newContentLines.Add(line);
-            }
-
-            if (removedEntries.Count == 0)
+            if (removingEntries.Count == 0)
             {
                 Console.WriteLine($"'{target}' não está na staging area.");
                 return;
             }
 
+            var newContentLines = new List<string>();
+
+            foreach (var file in indexLines.Keys)
+            {
+                if (removingEntries.Contains(file)) 
+                {
+                    continue;
+                }
+
+                newContentLines.Add($"{indexLines[file]} {file}");
+            }
+
             IndexUtils.CreateOrUpdateIndex(string.Join('\n', newContentLines) + "\n");
 
-            if (removedEntries.Count == 1)
+            if (removingEntries.Count == 1)
             {
-                Console.WriteLine($"Arquivo '{removedEntries[0]}' removido da staging area.");
+                Console.WriteLine($"Arquivo '{removingEntries[0]}' removido da staging area.");
             }
             else
             {
-                Console.WriteLine($"Removidos {removedEntries.Count} arquivos da staging area (diretório '{target}').");
+                Console.WriteLine($"Removidos {removingEntries.Count} arquivos da staging area (diretório '{target}').");
             }
-        }
-
-        private static string NormalizePath(string path)
-        {
-            var fullPath = Path.GetFullPath(path);
-            var repoRoot = Directory.GetParent(Path.Combine(Directory.GetCurrentDirectory(), ".gitadr"))!.FullName;
-            var relativePath = Path.GetRelativePath(repoRoot, fullPath);
-
-            return relativePath.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar).TrimEnd(Path.DirectorySeparatorChar);
         }
     }
 }

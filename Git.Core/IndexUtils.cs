@@ -2,7 +2,7 @@
 {
     public class IndexUtils
     {
-        public static readonly string[] ignoreFiles = { ".gitadr", "Program.cs", "Git.csproj", "bin", "Commands", "Core", "obj", ".vs" };
+        public static readonly string[] ignoreFiles = { ".gitadr", "Program.cs", "Git.csproj", "bin", "Commands", "Store", "obj", ".vs" };
         public static Dictionary<string, string> GetIndexEntries(bool createIndexFile = false)
         {
             var gitDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
