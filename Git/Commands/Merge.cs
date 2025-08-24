@@ -49,9 +49,9 @@ namespace Git.Commands
                 return;
             }
 
-            var commitBase = FindMergeBase(headCommits!, targetCommits!);
+            var commitBase = FindMergeBase(headCommit, targetCommit);
 
-            var baseTreeSha1 = CommitUtils.GetCommitTreeSha1(commitBase);
+            var baseTreeSha1 = CommitUtils.GetCommitTreeSha1(commitBase!);
             var baseEntries = TreeUtils.GetTreeData(baseTreeSha1);
 
             var headTreeSha1 = CommitUtils.GetCommitTreeSha1(headCommit);
@@ -100,7 +100,7 @@ namespace Git.Commands
             }
         }
 
-        public static List<TreeEntry> BuildTreeFromTwoTreeDiffs(
+        private static List<TreeEntry> BuildTreeFromTwoTreeDiffs(
             List<TreeEntry> baseEntries,
             List<TreeEntry> headEntries,
             List<TreeEntry> targetEntries
@@ -135,7 +135,7 @@ namespace Git.Commands
                     continue;
                 }
 
-                if (headEntry != null && targetEntry != null)
+                if (headEntry != null && targetEntry != null && baseEntry != null)
                 {
                     if (headEntry.Mode.StartsWith("040") || targetEntry.Mode.StartsWith("040"))
                     {
@@ -159,11 +159,17 @@ namespace Git.Commands
                         continue;
                     }
 
-                    if (headEntry.Sha1 == targetEntry.Sha1)
+                    if (baseEntry.Sha1 == headEntry.Sha1 && headEntry.Sha1 != targetEntry.Sha1)
+                    {
+                        mergedEntries.Add(targetEntry);
+                    }
+
+                    if (baseEntry.Sha1 == targetEntry.Sha1 && headEntry.Sha1 != targetEntry.Sha1)
                     {
                         mergedEntries.Add(headEntry);
                     }
-                    else
+
+                    if (baseEntry.Sha1 != targetEntry.Sha1 && baseEntry.Sha1 != headEntry.Sha1)
                     {
                         Console.WriteLine($"Conflito detectado no arquivo {name}");
                         return new List<TreeEntry>();
@@ -289,21 +295,51 @@ namespace Git.Commands
             IndexUtils.CreateOrUpdateIndex(string.Join('\n', newContentLines) + "\n");
         }
 
-        private static string FindMergeBase(List<string> headCommits, List<string> targetCommits)
+        private static string? FindMergeBase(string headCommit, string targetCommit)
         {
-            foreach (var commitSha1 in headCommits)
+            var headAncestors = new HashSet<string>(GetAllCommitsFromCommit(headCommit));
+
+            var targetAncestors = GetAllCommitsFromCommit(targetCommit);
+
+            foreach (var commit in targetAncestors)
             {
-                var parents = CommitUtils.GetCommitParents(commitSha1);
-                if (parents.Count > 1)
+                if (headAncestors.Contains(commit))
                 {
-                    if (targetCommits.Contains(parents[1]))
-                    {
-                        return commitSha1;
-                    }
+                    return commit;
                 }
             }
 
-            return headCommits.Intersect(targetCommits).First();
+            return null;
+        }
+
+        private static List<string> GetAllCommitsFromCommit(string commitSha1)
+        {
+            var commits = new List<string>();
+            var stack = new Stack<string>();
+            var visited = new HashSet<string>();
+
+            stack.Push(commitSha1);
+
+            while (stack.Count > 0)
+            {
+                var current = stack.Pop();
+
+                if (visited.Contains(current))
+                {
+                    continue;
+                }
+
+                visited.Add(current);
+                commits.Add(current);
+
+                var parents = CommitUtils.GetCommitParents(current);
+                foreach (var parent in parents)
+                {
+                    stack.Push(parent);
+                }
+            }
+
+            return commits;
         }
     }
 }
