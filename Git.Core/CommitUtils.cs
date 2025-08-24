@@ -144,5 +144,27 @@ namespace Git.Core
 
             return relativePath.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar).TrimEnd(Path.DirectorySeparatorChar);
         }
+
+        public static void RemoveEmptyDirectories(string root)
+        {
+            var allDirs = Directory.GetDirectories(root, "*", SearchOption.AllDirectories)
+                                   .OrderByDescending(d => d.Length);
+
+            var gitDir = Path.GetFullPath(Path.Combine(root, ".gitadr"));
+
+            foreach (var dir in allDirs)
+            {
+                var full = Path.GetFullPath(dir);
+                if (full.Equals(gitDir, StringComparison.OrdinalIgnoreCase) || full.StartsWith(gitDir + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (!Directory.EnumerateFileSystemEntries(full).Any())
+                {
+                    Directory.Delete(full, recursive: false);
+                }
+            }
+        }
     }
 }

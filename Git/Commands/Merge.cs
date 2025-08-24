@@ -197,6 +197,8 @@ namespace Git.Commands
                     }
                 }
             }
+
+            CommitUtils.RemoveEmptyDirectories(Directory.GetCurrentDirectory());
         }
 
         private static void AddOrUpdateIndexFile(string file, string sha1)

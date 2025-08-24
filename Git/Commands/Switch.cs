@@ -95,6 +95,8 @@ namespace Git.Commands
                 }
             }
 
+            CommitUtils.RemoveEmptyDirectories(Directory.GetCurrentDirectory());
+
             BranchUtils.WriteHead(@$"ref: refs\heads\{branchName}");
 
             Console.WriteLine($"Branch atual alterado com sucesso para {branchName}");

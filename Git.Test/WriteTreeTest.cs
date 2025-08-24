@@ -2,6 +2,7 @@
 using Csharp.Core;
 using Git.Core;
 using System.Text;
+using static Git.Core.TreeUtils;
 
 namespace Csharp.Test
 {
