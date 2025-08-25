@@ -23,7 +23,7 @@ namespace Git.Commands
 
             if (target == ".")
             {
-                ExecuteRercusive(Directory.GetCurrentDirectory(), indexLines);
+                ExecuteRecursive(Directory.GetCurrentDirectory(), indexLines);
                 Console.WriteLine("Workspace restaurada com sucesso a partir do HEAD.");
 
                 return;
@@ -33,7 +33,7 @@ namespace Git.Commands
 
             if (Directory.Exists(target))
             {
-                ExecuteRercusive(target, indexLines);
+                ExecuteRecursive(target, indexLines);
                 Console.WriteLine($"Diretório '{target}' restaurado com sucesso.");
 
                 return;
@@ -50,7 +50,7 @@ namespace Git.Commands
             Console.WriteLine($"O caminho '{target}' não existe no último commit.");
         }
 
-        public static void ExecuteRercusive(string directory, Dictionary<string, string> indexLines)
+        public static void ExecuteRecursive(string directory, Dictionary<string, string> indexLines)
         {
             foreach (var wsFile in Directory.GetFiles(directory))
             {
@@ -75,7 +75,7 @@ namespace Git.Commands
                     continue;
                 }
 
-                ExecuteRercusive(Path.Combine(directory, wsDirectory), indexLines);
+                ExecuteRecursive(Path.Combine(directory, wsDirectory), indexLines);
             }
         }
     }

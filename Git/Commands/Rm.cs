@@ -12,10 +12,9 @@ namespace Git.Commands
                 return;
             }
 
-            var gitDir = Path.Combine(Directory.GetCurrentDirectory(), ".gitadr");
-            var pathIndex = Path.Combine(gitDir, "index");
+            var indexLines = IndexUtils.GetIndexEntries(); 
 
-            if (!File.Exists(pathIndex))
+            if (indexLines.Count == 0)
             {
                 Console.WriteLine("Nenhum arquivo na staging area.");
                 return;
@@ -23,41 +22,63 @@ namespace Git.Commands
 
             var target = Path.GetRelativePath(Directory.GetCurrentDirectory(), args[0]);
 
-            var indexLines = IndexUtils.GetIndexEntries();
-
-            var removingEntries = indexLines.Keys.Where(index =>
-                index == target ||
-                index.StartsWith($"{target + Path.DirectorySeparatorChar}") 
-            ).ToList();
-
-            if (removingEntries.Count == 0)
+            if (!indexLines.ContainsKey(target) && !indexLines.Any(index => index.Key.StartsWith(target + Path.DirectorySeparatorChar)))
             {
-                Console.WriteLine($"'{target}' não está na staging area.");
+                Console.WriteLine($"'{target}' não encontrado na staging area.");
+
                 return;
             }
 
+            if (Directory.Exists(target))
+            {
+                ExecuteRecursive(target, indexLines);
+
+                return;
+            }
+
+            if (File.Exists(target))
+            {
+                RemoveIndexFile(target, indexLines);
+
+                return;
+            }
+        }
+
+        private static void ExecuteRecursive(string directory, Dictionary<string, string> indexLines)
+        {
+            foreach (var wsFile in Directory.GetFiles(directory))
+            {
+                var file = Path.GetRelativePath(Directory.GetCurrentDirectory(), wsFile);
+                var indexFileSha1 = indexLines.ContainsKey(file) ? indexLines[file] : null;
+
+                if (indexFileSha1 != null)
+                {
+                    RemoveIndexFile(file, indexLines);
+                }
+            }
+
+            foreach (var wsDirectory in Directory.GetDirectories(directory))
+            {
+                ExecuteRecursive(wsDirectory, indexLines);
+            }
+        }
+
+        private static void RemoveIndexFile(string file, Dictionary<string, string> indexLines)
+        {
             var newContentLines = new List<string>();
 
-            foreach (var file in indexLines.Keys)
+            foreach (var line in indexLines.Keys)
             {
-                if (removingEntries.Contains(file)) 
+                if (line == file)
                 {
+                    Console.WriteLine($"Arquivo '{line}' removido da staging area.");
                     continue;
                 }
 
-                newContentLines.Add($"{indexLines[file]} {file}");
+                newContentLines.Add($"{indexLines[line]} {line}");
             }
 
             IndexUtils.CreateOrUpdateIndex(string.Join('\n', newContentLines) + "\n");
-
-            if (removingEntries.Count == 1)
-            {
-                Console.WriteLine($"Arquivo '{removingEntries[0]}' removido da staging area.");
-            }
-            else
-            {
-                Console.WriteLine($"Removidos {removingEntries.Count} arquivos da staging area (diretório '{target}').");
-            }
         }
     }
 }
