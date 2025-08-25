@@ -8,67 +8,68 @@ namespace Git.Commands
         {
             if (args.Length < 1)
             {
-                Console.WriteLine("Uso: gitadr restore <arquivo | diretório | .>");
+                Console.WriteLine("Uso: gitadr restore [--staged] <arquivo | diretório | .>");
                 return;
             }
 
-            var headCommit = CommitUtils.GetLastCommitSha1FromHead();
+            bool restoreStaged = args[0] == "--staged";
+            string target;
 
-            if (headCommit == null)
+            if (restoreStaged)
             {
-                Console.WriteLine("Nenhum commit encontrado para restaurar.");
+                if (args.Length < 2)
+                {
+                    Console.WriteLine("Uso: gitadr restore --staged <arquivo | diretório | .>");
+                    return;
+                }
+                target = args[1];
+            }
+            else
+            {
+                target = args[0];
+            }
+
+            var headCommit = CommitUtils.GetLastCommitSha1FromHead();
+            if (string.IsNullOrEmpty(headCommit))
+            {
+                Console.WriteLine("Nenhum commit encontrado. Não é possível restaurar do HEAD.");
                 return;
             }
 
             var commitTree = CommitUtils.GetCommitTreeSha1(headCommit);
-            var commitEntries = TreeUtils.GetTreeEntriesFromSha1(string.Empty, commitTree, new Dictionary<string, (string Mode, string Sha1)>());
-
-            var target = args[0];
-            var removeIndex = args[0] == "--staged";
-
-            if (removeIndex)
-            {
-                if (args.Length == 2)
-                {
-                    target = args[1];
-                }
-                else
-                {
-                    Console.WriteLine("Uso: gitadr restore <arquivo | diretório | .>");
-                    return;
-                }                
-            }
-                  
-            if (target == ".")
-            {
-                ExecuteRecursive(Directory.GetCurrentDirectory(), commitEntries, removeIndex);
-                Console.WriteLine("Workspace restaurada com sucesso a partir do HEAD.");
-
-                return;
-            }
+            var commitEntries = TreeUtils.GetTreeEntriesFromSha1(
+                string.Empty,
+                commitTree,
+                new Dictionary<string, (string Mode, string Sha1)>()
+            );
 
             target = Path.GetRelativePath(Directory.GetCurrentDirectory(), target);
 
+            if (target == ".")
+            {
+                ExecuteRecursive(Directory.GetCurrentDirectory(), commitEntries, restoreStaged);
+                Console.WriteLine(restoreStaged ? "Index restaurado a partir do HEAD." : "Workspace restaurada com sucesso a partir do HEAD.");
+                return;
+            }
+
             if (Directory.Exists(target))
             {
-                ExecuteRecursive(target, commitEntries, removeIndex);
-                Console.WriteLine($"Diretório '{target}' restaurado com sucesso.");
-
+                ExecuteRecursive(target, commitEntries, restoreStaged);
+                Console.WriteLine(restoreStaged ? $"Index do diretório '{target}' restaurado com sucesso." : $"Diretório '{target}' restaurado com sucesso.");
                 return;
             }
 
-            if (File.Exists(target) && commitEntries.ContainsKey(target))
+            if (!commitEntries.ContainsKey(target))
             {
-                RestoreFile(target, commitEntries[target].Sha1, removeIndex);
-                Console.WriteLine($"Arquivo '{target}' restaurado com sucesso.");
-
+                Console.WriteLine($"O caminho '{target}' não existe no último commit. Não é possível restaurar.");
                 return;
             }
 
-            Console.WriteLine($"O caminho '{target}' não existe no último commit.");
+            RestoreFile(target, commitEntries[target].Sha1, restoreStaged);
+            Console.WriteLine(restoreStaged ? $"Index do arquivo '{target}' restaurado com sucesso." : $"Arquivo '{target}' restaurado com sucesso.");
         }
 
-        public static void ExecuteRecursive(string directory, Dictionary<string, (string Mode, string Sha1)> commitEntries, bool removeIndex)
+        public static void ExecuteRecursive(string directory, Dictionary<string, (string Mode, string Sha1)> commitEntries, bool restoreStaged)
         {
             foreach (var wsFile in Directory.GetFiles(directory))
             {
@@ -78,11 +79,9 @@ namespace Git.Commands
                     continue;
                 }
 
-                var indexFileSha1 = commitEntries.ContainsKey(file) ? commitEntries[file].Sha1 : null;
-
-                if (indexFileSha1 != null) 
+                if (commitEntries.TryGetValue(file, out var entry))
                 {
-                    RestoreFile(file, indexFileSha1, removeIndex);
+                    RestoreFile(file, entry.Sha1, restoreStaged);
                 }
             }
 
@@ -92,22 +91,21 @@ namespace Git.Commands
                 {
                     continue;
                 }
-
-                ExecuteRecursive(Path.Combine(directory, wsDirectory), commitEntries, removeIndex);
+                    
+                ExecuteRecursive(wsDirectory, commitEntries, restoreStaged);
             }
         }
 
-        private static void RestoreFile(string file, string sha1, bool romoveIndex)
-        {           
-            if (romoveIndex)
+        private static void RestoreFile(string file, string sha1, bool restoreStaged)
+        {
+            if (restoreStaged)
             {
-                Rm.Execute([file]);
                 Add.AddOrUpdateIndexFile(file, sha1);
-
-                return;
             }
-
-            Sha1Utils.WriteFileAndDirectoriesFromSha1(file, sha1);
+            else
+            {
+                Sha1Utils.WriteFileAndDirectoriesFromSha1(file, sha1);
+            }
         }
     }
 }

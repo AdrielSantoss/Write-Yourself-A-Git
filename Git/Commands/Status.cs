@@ -9,65 +9,66 @@ namespace Git.Commands
             var head = BranchUtils.GetHead();
             Console.WriteLine(head.Replace(@$"ref: refs{Path.DirectorySeparatorChar}heads{Path.DirectorySeparatorChar}", "On branch ") + "\n");
 
-            ExecuteRecursive(Directory.GetCurrentDirectory());
+            ExecuteRecursive();
         }
 
-        public static void ExecuteRecursive(string directory)
+        public static void ExecuteRecursive()
         {
-            var worksSpaceFiles = IndexUtils.RecursiveReadWorkSapce(Directory.GetCurrentDirectory(), new Dictionary<string, string>());
+            var workspaceFiles = IndexUtils.RecursiveReadWorkSapce(Directory.GetCurrentDirectory(), new Dictionary<string, string>());
+            var indexFiles = IndexUtils.GetIndexEntries(false);
 
             var commitHead = CommitUtils.GetLastCommitSha1FromHead();
             var headFiles = new Dictionary<string, (string Mode, string Sha1)>();
-
             if (!string.IsNullOrWhiteSpace(commitHead))
             {
                 var commitTreeSha1 = CommitUtils.GetCommitTreeSha1(commitHead);
                 TreeUtils.GetTreeEntriesFromSha1("", commitTreeSha1, headFiles);
             }
 
-            var indexFiles = IndexUtils.GetIndexEntries(false);
+            var allFiles = workspaceFiles.Keys
+                .Union(indexFiles.Keys)
+                .Union(headFiles.Keys)
+                .ToHashSet();
 
             var staged = new List<string>();
             var modified = new List<string>();
             var deleted = new List<string>();
             var untracked = new List<string>();
 
-            foreach (var file in indexFiles.Keys)
+            foreach (var file in allFiles)
             {
-                var shaIndex = indexFiles[file];
-                if (headFiles.ContainsKey(file))
+                headFiles.TryGetValue(file, out var headEntry);
+                var headSha1 = headEntry.Sha1;
+                indexFiles.TryGetValue(file, out var indexSha1);
+                workspaceFiles.TryGetValue(file, out var wsSha1);
+
+                if (headSha1 != indexSha1)
                 {
-                    if (headFiles[file].Sha1 != shaIndex)
+                    if (headSha1 == null && indexSha1 != null)
+                    {
+                        staged.Add($"new file: {file}");
+                    }
+                    else if (headSha1 != null && indexSha1 == null)
+                    {
+                        staged.Add($"deleted: {file}");
+                    }
+                    else
                     {
                         staged.Add($"modified: {file}");
                     }
                 }
-                else
-                {
-                    staged.Add($"new file: {file}");
-                }
-            }
 
-            foreach (var file in indexFiles.Keys)
-            {
-                var shaIndex = indexFiles[file];
-                if (!worksSpaceFiles.ContainsKey(file))
+                if (wsSha1 != null && indexSha1 != null && wsSha1 != indexSha1)
                 {
-                    deleted.Add(file); 
+                    modified.Add(file);
                 }
-                else
+                    
+                if (indexSha1 != null && wsSha1 == null)
                 {
-                    var sha1Ws = worksSpaceFiles[file];
-                    if (sha1Ws != shaIndex)
-                    {
-                        modified.Add(file);
-                    }
+                    deleted.Add(file);
                 }
-            }
-
-            foreach (var file in worksSpaceFiles.Keys)
-            {
-                if (!indexFiles.ContainsKey(file))
+                    
+                if (headSha1 == null && indexSha1 == null && wsSha1 != null)
                 {
                     untracked.Add(file);
                 }
@@ -80,7 +81,7 @@ namespace Git.Commands
                 {
                     ConsoleWithColor($"  {s}", ConsoleColor.Green);
                 }
-
+                    
                 Console.WriteLine();
             }
 

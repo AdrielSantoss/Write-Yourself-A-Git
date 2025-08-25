@@ -13,32 +13,44 @@ namespace Git.Commands
                 return;
             }
 
-            var fileOrDirectory = args[0];
-            var indexLines = IndexUtils.GetIndexEntries(true);
+            var target = args[0];
 
-            if (fileOrDirectory == ".")
+            if (target == ".")
             {
-                ExecuteRecursive(Directory.GetCurrentDirectory());
+                AddAll();
                 return;
             }
 
-            if (!File.Exists(fileOrDirectory) && !Directory.Exists(fileOrDirectory))
+            if (Directory.Exists(target))
             {
-                Console.WriteLine("Arquivo ou diretório não encontrado.");
+                ExecuteRecursive(Path.GetFullPath(target));
+                StageDeletionsUnderPath(Path.GetFullPath(target));
                 return;
             }
 
-            if (!File.Exists(fileOrDirectory) && Directory.Exists(fileOrDirectory)) 
+            var rel = Path.GetRelativePath(Directory.GetCurrentDirectory(), target);
+            AddOrUpdateIndexFile(rel);
+        }
+
+        public static void AddAll()
+        {
+            var workspaceFiles = IndexUtils.RecursiveReadWorkSapce(Directory.GetCurrentDirectory(), new Dictionary<string, string>());
+            var indexFiles = IndexUtils.GetIndexEntries(true);
+
+            foreach (var file in workspaceFiles.Keys)
             {
-                ExecuteRecursive(fileOrDirectory!);
-                return;
+                AddOrUpdateIndexFile(file);
             }
 
-            if (File.Exists(fileOrDirectory) && !Directory.Exists(fileOrDirectory))
+            foreach (var file in indexFiles.Keys.ToList())
             {
-                AddOrUpdateIndexFile(Path.GetRelativePath(Directory.GetCurrentDirectory(), fileOrDirectory));
-                return;
+                if (!workspaceFiles.ContainsKey(file))
+                {
+                    indexFiles.Remove(file);
+                }
             }
+
+            IndexUtils.CreateOrUpdateIndex(string.Join('\n', indexFiles.Select(kv => $"{kv.Value} {kv.Key}")) + "\n");
         }
 
         public static void ExecuteRecursive(string directory)
@@ -46,9 +58,7 @@ namespace Git.Commands
             foreach (var file in Directory.GetFiles(directory))
             {
                 if (IndexUtils.ignoreFiles.Any(ignoreFile => Path.GetFileName(file) == ignoreFile))
-                {
                     continue;
-                }
 
                 AddOrUpdateIndexFile(Path.GetRelativePath(Directory.GetCurrentDirectory(), file));
             }
@@ -56,56 +66,67 @@ namespace Git.Commands
             foreach (var subdir in Directory.GetDirectories(directory))
             {
                 if (IndexUtils.ignoreFiles.Any(ignoreFile => Path.GetFileName(subdir) == ignoreFile))
-                {
                     continue;
-                }
 
                 ExecuteRecursive(subdir);
             }
         }
 
-        public static void AddOrUpdateIndexFile(string file, string? sha1Param = null)
+        private static void StageDeletionsUnderPath(string basePath)
         {
-            var sha1 = HashObject.Execute(new string[] { "-w", file });
-
-            var lines = IndexUtils.GetIndexEntries(true);
-
-            var newContentLines = new List<string>();
-            var found = false;
-
-            foreach (var fileName in lines.Keys)
+            var root = Directory.GetCurrentDirectory();
+            var relBase = Path.GetRelativePath(root, basePath);
+            if (relBase == "." || string.IsNullOrEmpty(relBase))
             {
-                var fileSha1 = lines[fileName];
-
-                if (fileName == file)
-                {
-                    found = true;
-                    if (fileSha1 == sha1 && sha1Param == null)
-                    {
-                        return;
-                    }
-                 
-                    if (sha1Param != null)
-                    {
-                        newContentLines.Add($"{sha1Param} {fileName}");
-                    }
-                    else
-                    {
-                        newContentLines.Add($"{sha1} {fileName}");
-                    }
-                }
-                else
-                {
-                    newContentLines.Add($"{fileSha1} {fileName}");
-                }
+                relBase = string.Empty;
             }
 
-            if (!found)
+            var index = IndexUtils.GetIndexEntries(true);
+            var newContentLines = new List<string>();
+
+            foreach (var kv in index)
             {
+                var file = kv.Key;
+                var sha1 = kv.Value;
+
+                bool underBase =
+                    string.IsNullOrEmpty(relBase) ||
+                    file == relBase ||
+                    file.StartsWith(relBase + Path.DirectorySeparatorChar);
+
+                if (underBase)
+                {
+                    var fullPath = Path.Combine(root, file);
+                    if (!File.Exists(fullPath))
+                    {
+                        continue;
+                    }
+                }
+
                 newContentLines.Add($"{sha1} {file}");
             }
 
             IndexUtils.CreateOrUpdateIndex(string.Join('\n', newContentLines) + "\n");
+        }
+
+        public static void AddOrUpdateIndexFile(string file, string? sha1Param = null)
+        {
+            var index = IndexUtils.GetIndexEntries(true);
+
+            if (!File.Exists(file))
+            {
+                if (index.ContainsKey(file))
+                {
+                    index.Remove(file);
+                    IndexUtils.CreateOrUpdateIndex(string.Join('\n', index.Select(kv => $"{kv.Value} {kv.Key}")) + "\n");
+                }
+                return;
+            }
+
+            var sha1 = sha1Param ?? HashObject.Execute(new string[] { "-w", file });
+            index[file] = sha1;
+
+            IndexUtils.CreateOrUpdateIndex(string.Join('\n', index.Select(kv => $"{kv.Value} {kv.Key}")) + "\n");
         }
     }
 }
