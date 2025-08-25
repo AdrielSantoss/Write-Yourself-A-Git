@@ -64,7 +64,7 @@ namespace Git.Commands
             }
         }
 
-        public static void AddOrUpdateIndexFile(string file)
+        public static void AddOrUpdateIndexFile(string file, string? sha1Param = null)
         {
             var sha1 = HashObject.Execute(new string[] { "-w", file });
 
@@ -80,9 +80,14 @@ namespace Git.Commands
                 if (fileName == file)
                 {
                     found = true;
-                    if (fileSha1 == sha1)
+                    if (fileSha1 == sha1 && sha1Param == null)
                     {
                         return;
+                    }
+                 
+                    if (sha1Param != null)
+                    {
+                        newContentLines.Add($"{sha1Param} {fileName}");
                     }
                     else
                     {
