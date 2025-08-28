@@ -1,5 +1,6 @@
 ﻿using Csharp.Commands;
 using Git.Core;
+using System;
 
 namespace Git.Commands
 {
@@ -47,6 +48,7 @@ namespace Git.Commands
                 if (!workspaceFiles.ContainsKey(file))
                 {
                     indexFiles.Remove(file);
+                    IndexUtils.CreateOrUpdateIndex(string.Join('\n', indexFiles.Select(kv => $"{kv.Value} {kv.Key}")) + "\n");
                 }
             }
         }
