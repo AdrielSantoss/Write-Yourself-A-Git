@@ -49,8 +49,6 @@ namespace Git.Commands
                     indexFiles.Remove(file);
                 }
             }
-
-            IndexUtils.CreateOrUpdateIndex(string.Join('\n', indexFiles.Select(kv => $"{kv.Value} {kv.Key}")) + "\n");
         }
 
         public static void ExecuteRecursive(string directory)
