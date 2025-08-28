@@ -71,6 +71,7 @@ namespace Git.Commands
             {
                 var tgtSha1 = targetBranchEntries.ContainsKey(entry) ? targetBranchEntries[entry].Sha1 : null;
                 var wsSha1 = workSpaceEntries.ContainsKey(entry) ? workSpaceEntries[entry] : null;
+                var headSha1 = headEntries.FirstOrDefault(e => e.Key == entry).Value.Sha1;
 
                 if (tgtSha1 != null && wsSha1 != null)
                 {
@@ -82,7 +83,7 @@ namespace Git.Commands
                     continue;
                 }
 
-                if (tgtSha1 == null && wsSha1 != null)
+                if (tgtSha1 == null && wsSha1 != null && headSha1 != null)
                 {
                     File.Delete(Path.Combine(Directory.GetCurrentDirectory(), entry));
                     continue;
