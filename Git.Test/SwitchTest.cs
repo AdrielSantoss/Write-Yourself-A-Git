@@ -1,14 +1,15 @@
 ﻿using Csharp.Test.Configs;
 using Git.Commands;
 using Git.Core;
+using System.Diagnostics.Metrics;
 using System.Text;
 namespace Git.Test
 {
-    public class BranchTest : IClassFixture<InitFixture>
+    public class SwitchTest : IClassFixture<InitFixture>
     {
         [Theory]
-        [InlineData("branchTest")]
-        public void Branch_CreateBranchFileAndVerifyContent(string branchName)
+        [InlineData("branchTest2")]
+        public void Switch_CreateBranchAndSwitchHead(string branchName)
         {
             var fileName = "testeCommit.txt";
             var content = "test commit";
@@ -36,6 +37,11 @@ namespace Git.Test
 
             var branchContent = File.ReadAllText(branchPath);
             Assert.Equal(commitSha1, branchContent);
+
+            Switch.Execute([branchName]);
+
+            var head = BranchUtils.GetHead();
+            Assert.Equal($"ref: refs{Path.DirectorySeparatorChar}heads{Path.DirectorySeparatorChar}{branchName}", head);
         }
     }
 }
