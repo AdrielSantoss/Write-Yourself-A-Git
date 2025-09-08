@@ -51,6 +51,12 @@ namespace Git.Commands
 
             var lastCommitSha1 = CommitUtils.GetLastCommitSha1FromHead();
 
+            if (string.IsNullOrWhiteSpace(lastCommitSha1))
+            {
+                Console.WriteLine($"Não é possivel criar um branch quando não existem commits.");
+                return;
+            }
+
             BranchUtils.CreateOrUpdateBranch($"refs{Path.DirectorySeparatorChar}heads{Path.DirectorySeparatorChar}{branchName}", lastCommitSha1);
 
             Console.WriteLine($"Branch {branchName} criado com sucesso");
