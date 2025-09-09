@@ -7,7 +7,7 @@ namespace Git.Test
     public class RestoreTest : IClassFixture<InitFixture>
     {
         [Theory]
-        [InlineData("restoreTest", "restoreTest 1")]
+        [InlineData("restoreTest", "restoreTest")]
         public void Restore_RestoreChanges(string fileName, string fileContent)
         {
             File.WriteAllText(fileName, fileContent, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
@@ -30,7 +30,14 @@ namespace Git.Test
             var newSha1BlobFile = BlobUtils.GetSha1FromBlob(fileName);
             Assert.NotEqual(newSha1BlobFile, sha1BlobExpected);
 
-            Restore.Execute([fileName]);            
+            Add.Execute([fileName]);
+
+            Restore.Execute(["--staged", fileName]);
+
+            indexEntries = IndexUtils.GetIndexEntries();
+            Assert.NotEqual(indexEntries[fileName], newSha1BlobFile);
+
+            Restore.Execute([fileName]);
 
             newSha1BlobFile = BlobUtils.GetSha1FromBlob(fileName);
             Assert.Equal(newSha1BlobFile, sha1BlobExpected);
