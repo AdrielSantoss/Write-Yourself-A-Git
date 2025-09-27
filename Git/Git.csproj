@@ -11,5 +11,11 @@
   <ItemGroup>
     <ProjectReference Include="..\Git.Core\Git.Core.csproj" />
   </ItemGroup>
+  
+<ItemGroup>
+  <None Update="libs\diff_tool.dll">
+    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+  </None>
+</ItemGroup>
 
 </Project>

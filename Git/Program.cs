@@ -71,6 +71,10 @@ switch (args[0])
         Merge.Execute(args[1..]);
         break;
 
+    case "diff":
+        Diff.Execute(args[1..]);
+        break;
+
     default:
         Console.WriteLine($"Comando desconhecido: {args[0]}");
         break;
