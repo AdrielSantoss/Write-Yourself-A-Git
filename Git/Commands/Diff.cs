@@ -1,6 +1,4 @@
 ﻿using Git.Core;
-using System;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -8,12 +6,49 @@ namespace Git.Commands
 {
     public class Diff
     {
-        public static string? Execute(string[] args)
+        public static void Execute(string[] args)
         {
-            var contentA = new[] { "a", "b", "c", "b" };
-            var contentB = new[] { "a", "b", "b", "c" };
+            // gitadr diff → working directory vs index
+            var workspaceFiles = IndexUtils.RecursiveReadWorkSapce(Directory.GetCurrentDirectory(), new Dictionary<string, string>());
+            var indexFiles = IndexUtils.GetIndexEntries(false);
 
-            return RunDiff(contentA, contentB);
+            var allFiles = workspaceFiles.Keys
+            .Union(indexFiles.Keys)
+            .Union(workspaceFiles.Keys);
+
+            foreach (var file in allFiles)
+            {
+                if (indexFiles.ContainsKey(file))
+                {
+                    var sha1A = indexFiles[file];
+                    var sha1B = Sha1Utils.CreateSha1FromByteData(File.ReadAllBytes(file));
+
+                    ShowDiffHead(file, file, sha1A, sha1B);
+
+                    var data = Sha1Utils.GetObjectDataBySha1(sha1A);
+                    var nullIndex = Array.IndexOf(data, (byte)0);
+                    var contentA = Encoding.UTF8.GetString(data[(nullIndex + 1)..]);
+
+                    var contentB = File.ReadAllText(file);
+
+                    if (string.IsNullOrWhiteSpace(contentA) && string.IsNullOrWhiteSpace(contentB))
+                    {
+                        return;
+                    }
+
+                    RunDiff(contentA.Split("\n"), contentB.Split("\n"));
+                }
+            }
+        }
+
+        private static void ShowDiffHead(string fileA, string fileB, string sha1A, string sha1B)
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine($"diff --gitadr a{Path.DirectorySeparatorChar}{Path.GetFileName(fileA)} b{Path.DirectorySeparatorChar}{Path.GetFileName(fileB)}");
+            Console.WriteLine($"index {sha1A.Substring(0, 7)}..{sha1B.Substring(0, 7)} 100644");
+            Console.WriteLine($"--- a{Path.DirectorySeparatorChar}{Path.GetFileName(fileA)}");
+            Console.WriteLine($"+++ b{Path.DirectorySeparatorChar}{Path.GetFileName(fileB)}");
+            Console.ResetColor();
         }
 
         private static string RunDiff(string[] contentA, string[] contentB)
