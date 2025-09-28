@@ -10,8 +10,8 @@ namespace Git.Commands
     {
         public static string? Execute(string[] args)
         {
-            var contentA = new[] { "linha1", "linha2" };
-            var contentB = new[] { "linha1", "linhaX", "linha2" };
+            var contentA = new[] { "a", "b", "c", "b" };
+            var contentB = new[] { "a", "b", "b", "c" };
 
             return RunDiff(contentA, contentB);
         }
@@ -24,7 +24,7 @@ namespace Git.Commands
             try
             {
                 int outLen;
-                IntPtr resultPtr = myers_diff_c(aPtrs, aPtrs.Length, bPtrs, bPtrs.Length, out outLen);
+                IntPtr resultPtr = patience_diff(aPtrs, aPtrs.Length, bPtrs, bPtrs.Length, out outLen);
 
                 if (resultPtr == IntPtr.Zero || outLen == 0)
                     return string.Empty;
@@ -59,7 +59,16 @@ namespace Git.Commands
         }
 
         [DllImport("diff_tool.dll", CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr myers_diff_c(
+        private static extern IntPtr myers_diff(
+            IntPtr[] content_a,
+            int len_a,
+            IntPtr[] content_b,
+            int len_b,
+            out int out_len
+        );
+
+        [DllImport("diff_tool.dll", CallingConvention = CallingConvention.Cdecl)]
+        private static extern IntPtr patience_diff(
             IntPtr[] content_a,
             int len_a,
             IntPtr[] content_b,
