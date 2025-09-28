@@ -8,17 +8,157 @@ namespace Git.Commands
     {
         public static void Execute(string[] args)
         {
-            // gitadr diff → working directory vs index
-            var workspaceFiles = IndexUtils.RecursiveReadWorkSapce(Directory.GetCurrentDirectory(), new Dictionary<string, string>());
-            var indexFiles = IndexUtils.GetIndexEntries(false);
+            if (args.Length == 0)
+            {
+                DiffIndexWorkSpace();
+            }
+            else if (args[0] == "--staged")
+            {
+                DiffHeadIndex();
+            }
+            else if (args[0] == "HEAD")
+            {
+                DiffHeadWorkspace();
+            }
+            else if (args.Length == 2)
+            {
+                DiffTwoCommits(args[0], args[1]);
+            }
+        }
 
-            var allFiles = workspaceFiles.Keys
-            .Union(indexFiles.Keys)
-            .Union(workspaceFiles.Keys);
+        private static void DiffTwoCommits(string commit1sha1, string commit2sha1)
+        {
+            var commit1TreeSha1 = CommitUtils.GetCommitTreeSha1(commit1sha1);
+            var commit1Files = TreeUtils.GetTreeEntriesFromSha1("", commit1TreeSha1, new Dictionary<string, (string Mode, string Sha1)>());
+
+            var commit2TreeSha1 = CommitUtils.GetCommitTreeSha1(commit2sha1);
+            var commit2Files = TreeUtils.GetTreeEntriesFromSha1("", commit2TreeSha1, new Dictionary<string, (string Mode, string Sha1)>());
+
+            var allFiles = commit1Files.Keys.Union(commit2Files.Keys);
 
             foreach (var file in allFiles)
             {
-                if (indexFiles.ContainsKey(file))
+                if (
+                    commit1Files.ContainsKey(file) &&
+                    commit2Files.ContainsKey(file) &&
+                    commit1Files[file].Sha1 != commit2Files[file].Sha1
+                )
+                {
+                    var sha1A = commit1Files[file].Sha1;
+                    var sha1B = commit2Files[file].Sha1;
+
+                    ShowDiffHead(file, file, sha1A, sha1B);
+
+                    var data = Sha1Utils.GetObjectDataBySha1(sha1A);
+                    var nullIndex = Array.IndexOf(data, (byte)0);
+                    var contentA = Encoding.UTF8.GetString(data[(nullIndex + 1)..]);
+
+                    var dataB = Sha1Utils.GetObjectDataBySha1(sha1B);
+                    var nullIndexB = Array.IndexOf(dataB, (byte)0);
+                    var contentB = Encoding.UTF8.GetString(dataB[(nullIndexB + 1)..]);
+
+                    if (string.IsNullOrWhiteSpace(contentA) && string.IsNullOrWhiteSpace(contentB))
+                    {
+                        return;
+                    }
+
+                    RunDiff(contentA.Split("\n"), contentB.Split("\n"));
+                }
+            }
+        }
+
+        private static void DiffHeadWorkspace()
+        {
+            var commitSha1 = CommitUtils.GetLastCommitSha1FromHead();
+            var treeSha1 = CommitUtils.GetCommitTreeSha1(commitSha1);
+            var headFiles = TreeUtils.GetTreeEntriesFromSha1("", treeSha1, new Dictionary<string, (string Mode, string Sha1)>());
+            var workspaceFiles = IndexUtils.RecursiveReadWorkSapce(Directory.GetCurrentDirectory(), new Dictionary<string, string>());
+
+            var allFiles = workspaceFiles.Keys.Union(headFiles.Keys);
+
+            foreach (var file in allFiles)
+            {
+                if (
+                    workspaceFiles.ContainsKey(file) &&
+                    headFiles.ContainsKey(file) &&
+                    workspaceFiles[file] != headFiles[file].Sha1
+                )
+                {
+                    var sha1A = headFiles[file].Sha1;
+                    var sha1B = workspaceFiles[file];
+
+                    ShowDiffHead(file, file, sha1A, sha1B);
+
+                    var data = Sha1Utils.GetObjectDataBySha1(sha1A);
+                    var nullIndex = Array.IndexOf(data, (byte)0);
+                    var contentA = Encoding.UTF8.GetString(data[(nullIndex + 1)..]);
+
+                    var contentB = File.ReadAllText(file);
+
+                    if (string.IsNullOrWhiteSpace(contentA) && string.IsNullOrWhiteSpace(contentB))
+                    {
+                        return;
+                    }
+
+                    RunDiff(contentA.Split("\n"), contentB.Split("\n"));
+                }
+            }
+        }
+
+        private static void DiffHeadIndex()
+        {
+            var commitSha1 = CommitUtils.GetLastCommitSha1FromHead();
+            var treeSha1 = CommitUtils.GetCommitTreeSha1(commitSha1);
+            var headFiles = TreeUtils.GetTreeEntriesFromSha1("", treeSha1, new Dictionary<string, (string Mode, string Sha1)>());
+            var indexFiles = IndexUtils.GetIndexEntries(false);
+
+            var allFiles = indexFiles.Keys.Union(headFiles.Keys);
+
+            foreach (var file in allFiles)
+            {
+                if (
+                    indexFiles.ContainsKey(file) && 
+                    headFiles.ContainsKey(file) &&
+                    indexFiles[file] != headFiles[file].Sha1
+                )
+                {
+                    var sha1A = headFiles[file].Sha1;
+                    var sha1B = indexFiles[file];
+
+                    ShowDiffHead(file, file, sha1A, sha1B);
+
+                    var data = Sha1Utils.GetObjectDataBySha1(sha1A);
+                    var nullIndex = Array.IndexOf(data, (byte)0);
+                    var contentA = Encoding.UTF8.GetString(data[(nullIndex + 1)..]);
+
+                    var dataB = Sha1Utils.GetObjectDataBySha1(sha1B);
+                    var nullIndexB = Array.IndexOf(dataB, (byte)0);
+                    var contentB = Encoding.UTF8.GetString(dataB[(nullIndexB + 1)..]);
+
+                    if (string.IsNullOrWhiteSpace(contentA) && string.IsNullOrWhiteSpace(contentB))
+                    {
+                        return;
+                    }
+
+                    RunDiff(contentA.Split("\n"), contentB.Split("\n"));
+                }
+            }
+        }
+
+        private static void DiffIndexWorkSpace()
+        {
+            var workspaceFiles = IndexUtils.RecursiveReadWorkSapce(Directory.GetCurrentDirectory(), new Dictionary<string, string>());
+            var indexFiles = IndexUtils.GetIndexEntries(false);
+
+            var allFiles = workspaceFiles.Keys.Union(indexFiles.Keys);
+
+            foreach (var file in allFiles)
+            {
+                if (
+                    indexFiles.ContainsKey(file) &&
+                    workspaceFiles.ContainsKey(file) &&
+                    indexFiles[file] != workspaceFiles[file]
+                )
                 {
                     var sha1A = indexFiles[file];
                     var sha1B = Sha1Utils.CreateSha1FromByteData(File.ReadAllBytes(file));
