@@ -8,25 +8,39 @@ namespace Git.Commands
     {
         public static void Execute(string[] args)
         {
-            if (args.Length == 0)
-            {
-                DiffIndexWorkSpace();
+            var isPatience = args.Any(arg => arg == "--patience");
+
+            if (
+                args.Length == 0 || 
+                args.Length == 1 && isPatience
+            ) {
+                DiffIndexWorkSpace(isPatience);
+                return;
             }
-            else if (args[0] == "--staged")
+
+            if (args[0] == "--staged")
             {
-                DiffHeadIndex();
+                DiffHeadIndex(isPatience);
+                return;
             }
-            else if (args[0] == "HEAD")
+
+            if (args[0] == "HEAD")
             {
-                DiffHeadWorkspace();
+                DiffHeadWorkspace(isPatience);
+                return;
             }
-            else if (args.Length == 2)
+
+            if (
+                args.Length == 2 ||
+                args.Length == 3 && isPatience
+            )
             {
-                DiffTwoCommits(args[0], args[1]);
+                DiffTwoCommits(args[0], args[1], isPatience);
+                return;
             }
         }
 
-        private static void DiffTwoCommits(string commit1sha1, string commit2sha1)
+        private static void DiffTwoCommits(string commit1sha1, string commit2sha1, bool isPatience)
         {
             var commit1TreeSha1 = CommitUtils.GetCommitTreeSha1(commit1sha1);
             var commit1Files = TreeUtils.GetTreeEntriesFromSha1("", commit1TreeSha1, new Dictionary<string, (string Mode, string Sha1)>());
@@ -62,12 +76,12 @@ namespace Git.Commands
                         return;
                     }
 
-                    RunDiff(contentA.Split("\n"), contentB.Split("\n"));
+                    RunDiff(contentA.Split("\n"), contentB.Split("\n"), isPatience);
                 }
             }
         }
 
-        private static void DiffHeadWorkspace()
+        private static void DiffHeadWorkspace(bool isPatience)
         {
             var commitSha1 = CommitUtils.GetLastCommitSha1FromHead();
             var treeSha1 = CommitUtils.GetCommitTreeSha1(commitSha1);
@@ -100,12 +114,12 @@ namespace Git.Commands
                         return;
                     }
 
-                    RunDiff(contentA.Split("\n"), contentB.Split("\n"));
+                    RunDiff(contentA.Split("\n"), contentB.Split("\n"), isPatience);
                 }
             }
         }
 
-        private static void DiffHeadIndex()
+        private static void DiffHeadIndex(bool isPatience)
         {
             var commitSha1 = CommitUtils.GetLastCommitSha1FromHead();
             var treeSha1 = CommitUtils.GetCommitTreeSha1(commitSha1);
@@ -140,12 +154,12 @@ namespace Git.Commands
                         return;
                     }
 
-                    RunDiff(contentA.Split("\n"), contentB.Split("\n"));
+                    RunDiff(contentA.Split("\n"), contentB.Split("\n"), isPatience);
                 }
             }
         }
 
-        private static void DiffIndexWorkSpace()
+        private static void DiffIndexWorkSpace(bool isPatience)
         {
             var workspaceFiles = IndexUtils.RecursiveReadWorkSapce(Directory.GetCurrentDirectory(), new Dictionary<string, string>());
             var indexFiles = IndexUtils.GetIndexEntries(false);
@@ -176,7 +190,7 @@ namespace Git.Commands
                         return;
                     }
 
-                    RunDiff(contentA.Split("\n"), contentB.Split("\n"));
+                    RunDiff(contentA.Split("\n"), contentB.Split("\n"), isPatience);
                 }
             }
         }
@@ -191,7 +205,7 @@ namespace Git.Commands
             Console.ResetColor();
         }
 
-        private static string RunDiff(string[] contentA, string[] contentB)
+        private static string RunDiff(string[] contentA, string[] contentB, bool isPatience)
         {
             IntPtr[] aPtrs = contentA.Select(Marshal.StringToHGlobalAnsi).ToArray();
             IntPtr[] bPtrs = contentB.Select(Marshal.StringToHGlobalAnsi).ToArray();
@@ -199,7 +213,9 @@ namespace Git.Commands
             try
             {
                 int outLen;
-                IntPtr resultPtr = patience_diff(aPtrs, aPtrs.Length, bPtrs, bPtrs.Length, out outLen);
+                IntPtr resultPtr = isPatience ? 
+                    patience_diff(aPtrs, aPtrs.Length, bPtrs, bPtrs.Length, out outLen) : 
+                    myers_diff(aPtrs, aPtrs.Length, bPtrs, bPtrs.Length, out outLen);
 
                 if (resultPtr == IntPtr.Zero || outLen == 0)
                     return string.Empty;
