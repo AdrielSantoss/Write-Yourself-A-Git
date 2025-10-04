@@ -1,8 +1,7 @@
-﻿using Git.Core;
-using System.Text;
+﻿using System.Text;
 using static Git.Core.TreeUtils;
 
-namespace Csharp.Core
+namespace Git.Core
 {
     public class TreeObject
     {

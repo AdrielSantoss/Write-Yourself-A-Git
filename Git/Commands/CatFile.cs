@@ -1,7 +1,7 @@
 ﻿using Git.Core;
 using System.Text;
 
-namespace Csharp.Commands
+namespace Git.Commands
 {
     public class CatFile
     {

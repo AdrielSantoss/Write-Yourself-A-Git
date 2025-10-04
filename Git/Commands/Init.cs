@@ -1,4 +1,4 @@
-﻿namespace Csharp.Commands
+﻿namespace Git.Commands
 {
     public class Init
     {

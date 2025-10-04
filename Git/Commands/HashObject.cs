@@ -1,7 +1,7 @@
 ﻿using Csharp.Core;
 using Git.Core;
 
-namespace Csharp.Commands
+namespace Git.Commands
 {
     public class HashObject
     {

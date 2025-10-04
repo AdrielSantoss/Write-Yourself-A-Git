@@ -1,6 +1,6 @@
 ﻿using System.IO.Compression;
 
-namespace Csharp.Core
+namespace Git.Core
 {
     public class ObjectStore
     {

@@ -1,6 +1,4 @@
-﻿using Csharp.Commands;
-using Git.Core;
-using System;
+﻿using Git.Core;
 
 namespace Git.Commands
 {
