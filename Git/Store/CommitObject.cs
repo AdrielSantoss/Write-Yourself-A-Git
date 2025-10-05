@@ -1,5 +1,4 @@
-﻿using Csharp.Core;
-using System.Text;
+﻿using System.Text;
 
 namespace Git.Core
 {
